@@ -4,7 +4,6 @@
 	<groupId>pl.piomin</groupId>
 	<artifactId>sample-vertx-microservices</artifactId>
 	<version>1.0-SNAPSHOT</version>
-	<packaging>jar</packaging>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -27,4 +26,9 @@
 		</plugins>
 	</build>
 
+	<packaging>pom</packaging>
+	<modules>
+		<module>account-vertx-service</module>
+		<module>customer-vertx-service</module>
+	</modules>
 </project>
