@@ -20,6 +20,12 @@ public interface AccountRepository {
 
 	@Fluent
 	AccountRepository findById(String id, Handler<AsyncResult<Account>> resultHandler);
+	
+	@Fluent
+	AccountRepository findByCustomer(String customerId, Handler<AsyncResult<List<Account>>> resultHandler);
+	
+	@Fluent
+	AccountRepository remove(String id, Handler<AsyncResult<Void>> resultHandler);
 
 	static AccountRepository createProxy(Vertx vertx, String address) {
 		return new AccountRepositoryVertxEBProxy(vertx, address);

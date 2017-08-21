@@ -1,4 +1,4 @@
-package pl.piomin.services.vertx.account;
+package pl.piomin.services.vertx.customer;
 
 import java.util.List;
 
@@ -12,18 +12,18 @@ import io.vertx.core.json.Json;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import pl.piomin.services.vertx.account.data.Account;
-import pl.piomin.services.vertx.account.data.AccountRepository;
+import pl.piomin.services.vertx.customer.data.Account;
+import pl.piomin.services.vertx.customer.data.AccountRepository;
 
 
-public class AccountServer extends AbstractVerticle {
+public class CustomerServer extends AbstractVerticle {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AccountServer.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CustomerServer.class);
 	
 	public static void main(String[] args) throws Exception {
 		Vertx vertx = Vertx.vertx();
 		vertx.deployVerticle(new MongoVerticle());
-		vertx.deployVerticle(new AccountServer());
+		vertx.deployVerticle(new CustomerServer());
 	}
 	
 	@Override
