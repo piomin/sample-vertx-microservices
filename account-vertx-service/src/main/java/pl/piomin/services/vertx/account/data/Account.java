@@ -1,8 +1,12 @@
-package pl.piomin.services.vertx.account.model;
+package pl.piomin.services.vertx.account.data;
 
+import io.vertx.codegen.annotations.DataObject;
+import io.vertx.core.json.JsonObject;
+
+@DataObject
 public class Account {
 
-	private Integer id;
+	private String id;
 	private String number;
 	private int balance;
 	private Integer customerId;
@@ -11,18 +15,25 @@ public class Account {
 	
 	}
 
-	public Account(Integer id, String number, int balance, Integer customerId) {
+	public Account(String id, String number, int balance, Integer customerId) {
 		this.id = id;
 		this.number = number;
 		this.balance = balance;
 		this.customerId = customerId;
 	}
+	
+	public Account(JsonObject json) {
+		this.id = json.getString("_id");
+		this.number = json.getString("number");
+		this.balance = json.getInteger("balance");
+		this.customerId = json.getInteger("customerId");
+	}
 
-	public Integer getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(Integer id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -50,4 +61,8 @@ public class Account {
 		this.customerId = customerId;
 	}
 
+	public JsonObject toJson() {
+		return JsonObject.mapFrom(this);
+	}
+	
 }
