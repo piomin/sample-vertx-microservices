@@ -13,9 +13,9 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import io.vertx.rxjava.servicediscovery.types.HttpEndpoint;
-import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.ServiceDiscovery;
+import io.vertx.servicediscovery.consul.ConsulServiceImporter;
+import pl.piomin.services.vertx.customer.client.AccountClient;
 import pl.piomin.services.vertx.customer.data.Customer;
 import pl.piomin.services.vertx.customer.data.CustomerRepository;
 
@@ -33,17 +33,22 @@ public class CustomerServer extends AbstractVerticle {
 	@Override
 	public void start() throws Exception {
 
+		ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
+		discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", "192.168.99.100").put("port", 8500).put("scan-period", 2000));
+		
 		CustomerRepository repository = CustomerRepository.createProxy(vertx, "customer-service");
 		  
 		Router router = Router.router(vertx);
 		router.route("/customer/*").handler(ResponseContentTypeHandler.create());
-//		router.route("/account/*").handler(LoggerHandler.create());
-		router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
+		router.route(HttpMethod.POST, "/customer").handler(BodyHandler.create());
 		router.get("/customer/:id").produces("application/json").handler(rc -> {
 			repository.findById(rc.request().getParam("id"), res -> {
 				Customer customer = res.result();
 				LOGGER.info("Found: {}", customer);
-				rc.response().end(customer.toString());
+				new AccountClient(discovery).findCustomerAccounts(customer.getId(), res2 -> {
+					customer.setAccounts(res2.result());
+					rc.response().end(customer.toString());	
+				});				
 			});
 		});
 		router.get("/customer/name/:name").produces("application/json").handler(rc -> {
@@ -75,11 +80,6 @@ public class CustomerServer extends AbstractVerticle {
 			});
 		});
 		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
-		
-		ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
-		discovery.getRecords(new JsonObject().put("name", "account-service"), ar -> {
-			LOGGER.info("Found: {}", ar.result());
-		});
 		
 	}
 

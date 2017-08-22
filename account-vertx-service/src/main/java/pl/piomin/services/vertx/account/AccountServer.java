@@ -15,12 +15,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
-import io.vertx.rxjava.servicediscovery.types.HttpEndpoint;
-import io.vertx.servicediscovery.Record;
-import io.vertx.servicediscovery.ServiceDiscovery;
-import io.vertx.servicediscovery.ServiceReference;
-import io.vertx.servicediscovery.consul.ConsulServiceImporter;
-import io.vertx.servicediscovery.impl.ServiceTypes;
 import pl.piomin.services.vertx.account.data.Account;
 import pl.piomin.services.vertx.account.data.AccountRepository;
 
@@ -39,21 +33,15 @@ public class AccountServer extends AbstractVerticle {
 	public void start() throws Exception {
 
 		WebClient client = WebClient.create(vertx);
-		JsonObject json = new JsonObject().put("ID", "account-service-1").put("Name", "account-service").put("Address", "127.0.0.1").put("Port", 8080).put("Tags", new JsonArray().add("http-endpoint"));
+		JsonObject json = new JsonObject().put("ID", "account-service-1").put("Name", "account-service").put("Address", "127.0.0.1").put("Port", 2222).put("Tags", new JsonArray().add("http-endpoint"));
 		client.put(8500, "192.168.99.100", "/v1/agent/service/register").sendJsonObject(json, res -> {
-			LOGGER.info("Consul registration status: {}", res.result());
+			LOGGER.info("Consul registration status: {}", res.result().statusCode());
 		});
-//		JsonObject c = new JsonObject().put("host", "192.168.99.100").put("port", 8500).put("scan-period", 2000);
-//		ServiceDiscovery discovery = ServiceDiscovery.create(vertx).registerServiceImporter(new ConsulServiceImporter(), c, res -> {
-//			LOGGER.info("Discovery ready: {}", res.succeeded());
-//		});
-		
 	    
 		AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
 		  
 		Router router = Router.router(vertx);
 		router.route("/account/*").handler(ResponseContentTypeHandler.create());
-//		router.route("/account/*").handler(LoggerHandler.create());
 		router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
 		router.get("/account/:id").produces("application/json").handler(rc -> {
 			repository.findById(rc.request().getParam("id"), res -> {
@@ -90,28 +78,7 @@ public class AccountServer extends AbstractVerticle {
 				rc.response().setStatusCode(200);
 			});
 		});
-		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
-		
-		ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
-		discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", "192.168.99.100").put("port", 8500).put("scan-period", 2000), res -> {
-			discovery.getRecord(r -> r.getName().equals("account-service"), res1 -> {
-				LOGGER.info("Result: {}", res1.result().getType());
-				ServiceReference ref = discovery.getReference(res1.result());
-				WebClient client2 = ref.getAs(WebClient.class);
-				client2.get("/accounts").send(res2 -> {
-					LOGGER.info("Response: {}", res2.result().bodyAsString());
-				});
-			});
-		});
-
-//		Record r = HttpEndpoint.createRecord("account-service", "localhost", 8080, "/");
-//		discovery.publish(r, res -> {
-//			LOGGER.info("Registered: {}, {}", res.result().getRegistration(), res.result().getStatus());
-//			discovery.getRecords(new JsonObject().put("name", "account-service"), ar -> {
-//				LOGGER.info("Found: {}", ar.result());
-//			});
-//		});
-		
+		vertx.createHttpServer().requestHandler(router::accept).listen(2222);		
 	}
 
 }
