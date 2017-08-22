@@ -3,24 +3,26 @@ package pl.piomin.services.vertx.customer.data;
 import java.util.List;
 
 import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.mongo.MongoClient;
 
+@ProxyGen
 public interface CustomerRepository {
 
 	@Fluent
-	CustomerRepository save(Account account, Handler<AsyncResult<Account>> resultHandler);
+	CustomerRepository save(Customer customer, Handler<AsyncResult<Customer>> resultHandler);
 
 	@Fluent
-	CustomerRepository findAll(Handler<AsyncResult<List<Account>>> resultHandler);
+	CustomerRepository findAll(Handler<AsyncResult<List<Customer>>> resultHandler);
 
 	@Fluent
-	CustomerRepository findById(String id, Handler<AsyncResult<Account>> resultHandler);
+	CustomerRepository findById(String id, Handler<AsyncResult<Customer>> resultHandler);
 	
 	@Fluent
-	CustomerRepository findByCustomer(String customerId, Handler<AsyncResult<List<Account>>> resultHandler);
+	CustomerRepository findByName(String name, Handler<AsyncResult<List<Customer>>> resultHandler);
 	
 	@Fluent
 	CustomerRepository remove(String id, Handler<AsyncResult<Void>> resultHandler);

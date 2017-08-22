@@ -1,0 +1,15 @@
+= Cheatsheets
+
+[[Customer]]
+== Customer
+
+
+[cols=">25%,^25%,50%"]
+[frame="topbot"]
+|===
+^|Name | Type ^| Description
+|[[age]]`age`|`Number (int)`|-
+|[[id]]`id`|`String`|-
+|[[name]]`name`|`String`|-
+|===
+
