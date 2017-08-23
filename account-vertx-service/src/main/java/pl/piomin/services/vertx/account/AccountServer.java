@@ -5,6 +5,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -31,13 +34,6 @@ public class AccountServer extends AbstractVerticle {
 	
 	@Override
 	public void start() throws Exception {
-
-		WebClient client = WebClient.create(vertx);
-		JsonObject json = new JsonObject().put("ID", "account-service-1").put("Name", "account-service").put("Address", "127.0.0.1").put("Port", 2222).put("Tags", new JsonArray().add("http-endpoint"));
-		client.put(8500, "192.168.99.100", "/v1/agent/service/register").sendJsonObject(json, res -> {
-			LOGGER.info("Consul registration status: {}", res.result().statusCode());
-		});
-	    
 		AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
 		  
 		Router router = Router.router(vertx);
@@ -78,7 +74,19 @@ public class AccountServer extends AbstractVerticle {
 				rc.response().setStatusCode(200);
 			});
 		});
-		vertx.createHttpServer().requestHandler(router::accept).listen(2222);		
+		
+		WebClient client = WebClient.create(vertx);
+		ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
+		ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
+		retriever.getConfig(conf -> {
+			JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
+			vertx.createHttpServer().requestHandler(router::accept).listen(conf.result().getInteger("port"));	
+			JsonObject json = new JsonObject().put("ID", "account-service-1").put("Name", "account-service").put("Address", "127.0.0.1").put("Port", 2222).put("Tags", new JsonArray().add("http-endpoint"));
+			client.put(discoveryConfig.getInteger("port"), discoveryConfig.getString("host"), "/v1/agent/service/register").sendJsonObject(json, res -> {
+				LOGGER.info("Consul registration status: {}", res.result().statusCode());
+			});
+		});
+		
 	}
 
 }

@@ -51,6 +51,11 @@
 			<version>${vertx.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-config</artifactId>
+			<version>${vertx.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.25</version>
@@ -78,7 +83,6 @@
 					<source>${java.version}</source>
 					<target>${java.version}</target>
 					<useIncrementalCompilation>false</useIncrementalCompilation>
-
 					<annotationProcessors>
 						<annotationProcessor>io.vertx.codegen.CodeGenProcessor</annotationProcessor>
 					</annotationProcessors>

@@ -5,6 +5,9 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.vertx.config.ConfigRetriever;
+import io.vertx.config.ConfigRetrieverOptions;
+import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
@@ -32,10 +35,7 @@ public class CustomerServer extends AbstractVerticle {
 	
 	@Override
 	public void start() throws Exception {
-
-		ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
-		discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", "192.168.99.100").put("port", 8500).put("scan-period", 2000));
-		
+		ServiceDiscovery discovery = ServiceDiscovery.create(vertx);	
 		CustomerRepository repository = CustomerRepository.createProxy(vertx, "customer-service");
 		  
 		Router router = Router.router(vertx);
@@ -79,7 +79,14 @@ public class CustomerServer extends AbstractVerticle {
 				rc.response().setStatusCode(200);
 			});
 		});
-		vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+		
+		ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
+		ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
+		retriever.getConfig(conf -> {
+			JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
+			discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", discoveryConfig.getString("host")).put("port", discoveryConfig.getInteger("port")).put("scan-period", 2000));
+			vertx.createHttpServer().requestHandler(router::accept).listen(conf.result().getInteger("port"));	
+		});
 		
 	}
 
