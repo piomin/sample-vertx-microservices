@@ -1,5 +1,5 @@
-## Reactive Microservices with Vert.x
+## Asynchronous Microservices with Vert.x
 
-Detailed description can be found here: [Reactive Microservices with Vert.x](https://piotrminkowski.wordpress.com/2017/08/27/reactive-microservices-with-vertx/) 
+Detailed description can be found here: [Asynchronous Microservices with Vert.x](https://piotrminkowski.wordpress.com/2017/08/24/asynchronous-microservices-with-vert-x/) 
 
 
