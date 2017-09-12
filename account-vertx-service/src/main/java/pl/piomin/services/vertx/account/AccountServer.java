@@ -14,9 +14,18 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.oauth2.AccessToken;
+import io.vertx.ext.auth.oauth2.KeycloakHelper;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
+import io.vertx.ext.auth.oauth2.OAuth2ClientOptions;
+import io.vertx.ext.auth.oauth2.OAuth2FlowType;
+import io.vertx.ext.auth.oauth2.impl.OAuth2API;
+import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import pl.piomin.services.vertx.account.data.Account;
 import pl.piomin.services.vertx.account.data.AccountRepository;
@@ -35,10 +44,45 @@ public class AccountServer extends AbstractVerticle {
 	@Override
 	public void start() throws Exception {
 		AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
-		  
+		
+		JsonObject keycloakJson = new JsonObject()
+			    .put("realm", "master")
+			    .put("realm-public-key", "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1xVBifXfS1uVM8S14JlyLpXck+0+hBQX258IiL5Fm2rZpkQ5lN9N1tadQdXBKk8V/0SxdTyoX7cpYQkcOs0Rj0XXmX7Lnk56euZwel+3MKAZWA20ld8BCfmDtX4/+VP311USUqR/W8Fd2p/gugKWF6VDMkri92qob1DdrcUiRlD8XYC0pwHwSvyW/3JvE5HeTy3U4vxC+19wHcwzLGNlVOlYPk9mzJHXN+LhZr/Tc7HeAsvVxYDXwOOh+/UWweMkvKy+OSNKG3aWLb92Ni3HejFn9kd4TRHfaapwWg1m5Duf3uqz8WDHbS/LeS4g3gQS0SvcCYI0huSoG3NA/z4K7wIDAQAB")
+			    .put("auth-server-url", "http://192.168.99.100:38080/auth")
+			    .put("ssl-required", "external")
+			    .put("resource", "account")
+			    .put("credentials", new JsonObject().put("secret", "5a9b4161-59ea-417a-a9de-7adb658aa045"));
+		
+		OAuth2Auth oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.PASSWORD, keycloakJson);
+		OAuth2AuthHandler oauth2Handler = (OAuth2AuthHandler) OAuth2AuthHandler.create(oauth2, "http://localhost:8080/account/callback").addAuthority("account:manage-accounts");
+		oauth2Handler.addAuthority("account:manage-accounts");
+		JsonObject tokenConfig = new JsonObject().put("username", "piotr.minkowski").put("password", "Piot_123");
+		oauth2.getToken(tokenConfig, res -> {
+			if (res.failed()) {
+				LOGGER.error("Access token error: {}", res.cause().getMessage());
+			} else {
+				AccessToken token = res.result();				
+				LOGGER.info("Access Token: {}", KeycloakHelper.rawAccessToken(token.principal()));
+				
+//			    oauth2.api(HttpMethod.GET, "/users", new JsonObject().put("access_token", token.principal().getString("access_token")), res2 -> {
+//			        JsonObject o =  res2.result();
+//			        LOGGER.info("User: {}", u);
+//			    });
+			    
+				token.isAuthorised("account:manage-accounts", rc -> {
+					LOGGER.info("Access Token: ok={}, result={}", rc.succeeded(), rc.result());
+					if (rc.result()) {
+						LOGGER.info("Access Token: {}", rc.result());
+					}
+				});
+			}
+		});
+		
 		Router router = Router.router(vertx);
 		router.route("/account/*").handler(ResponseContentTypeHandler.create());
+		router.route("/account/*").handler(oauth2Handler);
 		router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
+		oauth2Handler.setupCallback(router.get("/account/callback"));
 		router.get("/account/:id").produces("application/json").handler(rc -> {
 			repository.findById(rc.request().getParam("id"), res -> {
 				Account account = res.result();
@@ -74,6 +118,9 @@ public class AccountServer extends AbstractVerticle {
 				rc.response().setStatusCode(200);
 			});
 		});
+		
+		
+
 		
 		WebClient client = WebClient.create(vertx);
 		ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
