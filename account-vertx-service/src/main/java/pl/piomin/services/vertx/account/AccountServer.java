@@ -5,6 +5,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import io.netty.handler.codec.http.HttpResponseStatus;
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -17,14 +18,11 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.oauth2.AccessToken;
 import io.vertx.ext.auth.oauth2.KeycloakHelper;
 import io.vertx.ext.auth.oauth2.OAuth2Auth;
-import io.vertx.ext.auth.oauth2.OAuth2ClientOptions;
 import io.vertx.ext.auth.oauth2.OAuth2FlowType;
-import io.vertx.ext.auth.oauth2.impl.OAuth2API;
 import io.vertx.ext.auth.oauth2.providers.KeycloakAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import pl.piomin.services.vertx.account.data.Account;
@@ -56,30 +54,6 @@ public class AccountServer extends AbstractVerticle {
 		
 		OAuth2Auth oauth2 = KeycloakAuth.create(vertx, OAuth2FlowType.PASSWORD, keycloakJson);
 		OAuth2AuthHandler oauth2Handler = (OAuth2AuthHandler) OAuth2AuthHandler.create(oauth2, "http://localhost:2222");
-//		oauth2Handler.addAuthority("manage-account");
-//		JsonObject tokenConfig = new JsonObject().put("username", "piotr.minkowski").put("password", "Piot_123").put("scope", "modify-account view-account");
-//		oauth2.getToken(tokenConfig, res -> {
-//			if (res.failed()) {
-//				LOGGER.error("Access token error: {}", res.cause().getMessage());
-//			} else {
-//				AccessToken token = res.result();				
-//				LOGGER.info("Access Token: {}", KeycloakHelper.rawAccessToken(token.principal()));
-//				token.isAuthorised("realm:modify-account", rc -> {
-//					LOGGER.info("Access Token: ok={}, result={}", rc.succeeded(), rc.result());
-//					if (rc.result()) {
-//						LOGGER.info("Access Token: {}", rc.result());
-//					}
-//				});
-//				
-//				token.isAuthorised("realm:view-account", rc -> {
-//					LOGGER.info("Access Token: ok={}, result={}", rc.succeeded(), rc.result());
-//					if (rc.result()) {
-//						LOGGER.info("Access Token: {}", rc.result());
-//					}
-//				});
-//			}
-//		});
-		
 		Router router = Router.router(vertx);
 		router.route("/account/*").handler(ResponseContentTypeHandler.create());
 		router.route("/account/*").handler(oauth2Handler);
@@ -100,44 +74,73 @@ public class AccountServer extends AbstractVerticle {
 			});
 		});
 		router.get("/account/:id").produces("application/json").handler(rc -> {
-			repository.findById(rc.request().getParam("id"), res -> {
-				Account account = res.result();
-				LOGGER.info("Found: {}", account);
-				rc.response().end(account.toString());
+			rc.user().isAuthorised("realm:view-account", authRes -> {
+				LOGGER.info("Auth: {}", authRes.result());
+				if (authRes.result() == Boolean.TRUE) {
+					repository.findById(rc.request().getParam("id"), res -> {
+						Account account = res.result();
+						LOGGER.info("Found: {}", account);
+						rc.response().end(account.toString());
+					});
+				} else {
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+				}
 			});
 		});
 		router.get("/account/customer/:customer").produces("application/json").handler(rc -> {
-			repository.findByCustomer(rc.request().getParam("customer"), res -> {
-				List<Account> accounts = res.result();
-				LOGGER.info("Found: {}", accounts);
-				rc.response().end(Json.encodePrettily(accounts));
+			rc.user().isAuthorised("realm:view-account", authRes -> {
+				LOGGER.info("Auth: {}", authRes.result());
+				if (authRes.result() == Boolean.TRUE) {
+					repository.findByCustomer(rc.request().getParam("customer"), res -> {
+						List<Account> accounts = res.result();
+						LOGGER.info("Found: {}", accounts);
+						rc.response().end(Json.encodePrettily(accounts));
+					});
+				} else {
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+				}
 			});
 		});
 		router.get("/account").produces("application/json").handler(rc -> {
-			repository.findAll(res -> {
-				List<Account> accounts = res.result();
-				LOGGER.info("Found all: {}", accounts);
-				rc.response().end(Json.encodePrettily(accounts));
+			rc.user().isAuthorised("realm:view-account", authRes -> {
+				LOGGER.info("Auth: {}", authRes.result());
+				if (authRes.result() == Boolean.TRUE) {
+					repository.findAll(res -> {
+						List<Account> accounts = res.result();
+						LOGGER.info("Found all: {}", accounts);
+						rc.response().end(Json.encodePrettily(accounts));
+					});
+				} else {
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+				}
 			});
 		});
 		router.post("/account").produces("application/json").handler(rc -> {
 			rc.user().isAuthorised("realm:modify-account", authRes -> {
 				LOGGER.info("Auth: {}", authRes.result());
-				Account a = Json.decodeValue(rc.getBodyAsString(), Account.class);
-				repository.save(a, res -> {
-					Account account = res.result();
-					LOGGER.info("Created: {}", account);
-					rc.response().end(account.toString());
-				});
+				if (authRes.result() == Boolean.TRUE) {
+					Account a = Json.decodeValue(rc.getBodyAsString(), Account.class);
+					repository.save(a, res -> {
+						Account account = res.result();
+						LOGGER.info("Created: {}", account);
+						rc.response().end(account.toString());
+					});
+				} else {
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+				}
 			});
 		});
 		router.delete("/account/:id").handler(rc -> {
 			rc.user().isAuthorised("realm:modify-account", authRes -> {
 				LOGGER.info("Auth: {}", authRes.result());
-				repository.remove(rc.request().getParam("id"), res -> {
-					LOGGER.info("Removed: {}", rc.request().getParam("id"));
-					rc.response().setStatusCode(200);
-				});
+				if (authRes.result() == Boolean.TRUE) {
+					repository.remove(rc.request().getParam("id"), res -> {
+						LOGGER.info("Removed: {}", rc.request().getParam("id"));
+						rc.response().setStatusCode(200);
+					});
+				} else {
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+				}
 			});
 		});
 		
