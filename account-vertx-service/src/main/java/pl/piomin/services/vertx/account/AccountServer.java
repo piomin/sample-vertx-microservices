@@ -65,6 +65,7 @@ public class AccountServer extends AbstractVerticle {
 			oauth2.getToken(u.toJson(), res -> {
 				if (res.failed()) {
 					LOGGER.error("Access token error: {}", res.cause().getMessage());
+					rc.response().setStatusCode(HttpResponseStatus.INTERNAL_SERVER_ERROR.code()).end();
 				} else {
 					AccessToken token = res.result();				
 					LOGGER.info("Access Token: {}", KeycloakHelper.rawAccessToken(token.principal()));
@@ -83,7 +84,7 @@ public class AccountServer extends AbstractVerticle {
 						rc.response().end(account.toString());
 					});
 				} else {
-					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end();
 				}
 			});
 		});
@@ -97,7 +98,7 @@ public class AccountServer extends AbstractVerticle {
 						rc.response().end(Json.encodePrettily(accounts));
 					});
 				} else {
-					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end();
 				}
 			});
 		});
@@ -111,7 +112,7 @@ public class AccountServer extends AbstractVerticle {
 						rc.response().end(Json.encodePrettily(accounts));
 					});
 				} else {
-					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end();
 				}
 			});
 		});
@@ -126,7 +127,7 @@ public class AccountServer extends AbstractVerticle {
 						rc.response().end(account.toString());
 					});
 				} else {
-					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end();
 				}
 			});
 		});
@@ -139,7 +140,7 @@ public class AccountServer extends AbstractVerticle {
 						rc.response().setStatusCode(200);
 					});
 				} else {
-					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code());
+					rc.response().setStatusCode(HttpResponseStatus.UNAUTHORIZED.code()).end();
 				}
 			});
 		});

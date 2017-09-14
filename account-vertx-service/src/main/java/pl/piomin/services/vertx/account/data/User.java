@@ -18,6 +18,12 @@ public class User {
 		this.accessToken = accessToken;
 	}
 
+	public User(String username, String password, String scope) {
+		this.username = username;
+		this.password = password;
+		this.scope = scope;
+	}
+
 	public String getAccessToken() {
 		return accessToken;
 	}
