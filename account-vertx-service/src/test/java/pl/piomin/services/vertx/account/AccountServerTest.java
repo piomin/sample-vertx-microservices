@@ -33,13 +33,22 @@ public class AccountServerTest {
 	}
 
 	@Test
-	public void testSomething(TestContext context) {
+	public void testAuth(TestContext context) {
 		Async async = context.async();
 		WebClient client = WebClient.create(vertx);
 		User u = new User("piotr.minkowski", "Piot_123", "modify-account view-account");
 		client.post(2222, "localhost", "/login").sendJson(u, ar -> {
-			LOGGER.info("Response: {}", ar.result().statusCode());
-			async.complete();
+			LOGGER.info("Response code: {}", ar.result().statusCode());
+			LOGGER.info("Response: {}", ar.result().bodyAsString());
+			if (ar.result().statusCode() == 200) {
+				User user = ar.result().bodyAsJson(User.class);
+				client.get(2222, "localhost", "/account").putHeader("Authorization", "Bearer " + user.getAccessToken()).send(r -> {
+					LOGGER.info("GET result: {}", r.result().bodyAsString());
+					async.complete();
+				});
+			} else {
+				async.complete();
+			}
 		});
 	}
 
