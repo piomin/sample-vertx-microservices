@@ -80,7 +80,7 @@ public class AccountServer extends AbstractVerticle {
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
         retriever.getConfig(conf -> {
             JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
-            vertx.createHttpServer().requestHandler(router::accept).listen(conf.result().getInteger("port"));
+            vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
             JsonObject json = new JsonObject().put("ID", "account-service-1").put("Name", "account-service").put("Address", "127.0.0.1").put("Port", 2222).put("Tags", new JsonArray().add("http-endpoint"));
             client.put(discoveryConfig.getInteger("port"), discoveryConfig.getString("host"), "/v1/agent/service/register").sendJsonObject(json, res -> {
                 LOGGER.info("Consul registration status: {}", res.result().statusCode());

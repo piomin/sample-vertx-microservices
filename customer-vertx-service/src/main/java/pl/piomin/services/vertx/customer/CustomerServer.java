@@ -85,7 +85,7 @@ public class CustomerServer extends AbstractVerticle {
         retriever.getConfig(conf -> {
             JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
             discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", discoveryConfig.getString("host")).put("port", discoveryConfig.getInteger("port")).put("scan-period", 2000));
-            vertx.createHttpServer().requestHandler(router::accept).listen(conf.result().getInteger("port"));
+            vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
         });
 
     }

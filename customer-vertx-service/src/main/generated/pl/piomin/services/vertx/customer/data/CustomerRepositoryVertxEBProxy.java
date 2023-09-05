@@ -16,7 +16,6 @@
 
 package pl.piomin.services.vertx.customer.data;
 
-import pl.piomin.services.vertx.customer.data.CustomerRepository;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.Vertx;
 import io.vertx.core.Future;
@@ -29,9 +28,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.function.Function;
-import io.vertx.serviceproxy.ProxyHelper;
 import io.vertx.serviceproxy.ServiceException;
 import io.vertx.serviceproxy.ServiceExceptionMessageCodec;
+import io.vertx.serviceproxy.ProxyUtils;
+
 import pl.piomin.services.vertx.customer.data.CustomerRepository;
 import java.util.List;
 import io.vertx.core.Vertx;
@@ -39,14 +39,13 @@ import io.vertx.ext.mongo.MongoClient;
 import pl.piomin.services.vertx.customer.data.Customer;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
-
 /*
   Generated Proxy code - DO NOT EDIT
   @author Roger the Robot
 */
+
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class CustomerRepositoryVertxEBProxy implements CustomerRepository {
-
   private Vertx _vertx;
   private String _address;
   private DeliveryOptions _options;
@@ -61,96 +60,111 @@ public class CustomerRepositoryVertxEBProxy implements CustomerRepository {
     this._address = address;
     this._options = options;
     try {
-      this._vertx.eventBus().registerDefaultCodec(ServiceException.class,
-          new ServiceExceptionMessageCodec());
-    } catch (IllegalStateException ex) {}
+      this._vertx.eventBus().registerDefaultCodec(ServiceException.class, new ServiceExceptionMessageCodec());
+    } catch (IllegalStateException ex) {
+    }
   }
 
-  public CustomerRepository save(Customer customer, Handler<AsyncResult<Customer>> resultHandler) {
+  @Override
+  public CustomerRepository save(Customer customer, Handler<AsyncResult<Customer>> resultHandler){
     if (closed) {
       resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
       return this;
     }
     JsonObject _json = new JsonObject();
-    _json.put("customer", customer == null ? null : customer.toJson());
+    _json.put("customer", customer != null ? customer.toJson() : null);
+
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "save");
-    _vertx.eventBus().<JsonObject>send(_address, _json, _deliveryOptions, res -> {
+    _deliveryOptions.getHeaders().set("action", "save");
+    _vertx.eventBus().<JsonObject>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         resultHandler.handle(Future.failedFuture(res.cause()));
       } else {
-        resultHandler.handle(Future.succeededFuture(res.result().body() == null ? null : new Customer(res.result().body())));
-                      }
-    });
-    return this;
-  }
-
-  public CustomerRepository findAll(Handler<AsyncResult<List<Customer>>> resultHandler) {
-    if (closed) {
-      resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
-      return this;
-    }
-    JsonObject _json = new JsonObject();
-    DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
-    _deliveryOptions.addHeader("action", "findAll");
-    _vertx.eventBus().<JsonArray>send(_address, _json, _deliveryOptions, res -> {
-      if (res.failed()) {
-        resultHandler.handle(Future.failedFuture(res.cause()));
-      } else {
-        resultHandler.handle(Future.succeededFuture(res.result().body().stream().map(o -> o instanceof Map ? new Customer(new JsonObject((Map) o)) : new Customer((JsonObject) o)).collect(Collectors.toList())));
+        resultHandler.handle(Future.succeededFuture(res.result().body() != null ? new pl.piomin.services.vertx.customer.data.Customer((JsonObject)res.result().body()) : null));
       }
     });
     return this;
   }
+  @Override
+  public CustomerRepository findAll(Handler<AsyncResult<List<Customer>>> resultHandler){
+    if (closed) {
+      resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
+      return this;
+    }
+    JsonObject _json = new JsonObject();
 
-  public CustomerRepository findById(String id, Handler<AsyncResult<Customer>> resultHandler) {
+    DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
+    _deliveryOptions.addHeader("action", "findAll");
+    _deliveryOptions.getHeaders().set("action", "findAll");
+    _vertx.eventBus().<JsonArray>request(_address, _json, _deliveryOptions, res -> {
+      if (res.failed()) {
+        resultHandler.handle(Future.failedFuture(res.cause()));
+      } else {
+        resultHandler.handle(Future.succeededFuture(res.result().body().stream()
+          .map(v -> v != null ? new pl.piomin.services.vertx.customer.data.Customer((JsonObject)v) : null)
+          .collect(Collectors.toList())));
+      }
+    });
+    return this;
+  }
+  @Override
+  public CustomerRepository findById(String id, Handler<AsyncResult<Customer>> resultHandler){
     if (closed) {
       resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
       return this;
     }
     JsonObject _json = new JsonObject();
     _json.put("id", id);
+
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "findById");
-    _vertx.eventBus().<JsonObject>send(_address, _json, _deliveryOptions, res -> {
+    _deliveryOptions.getHeaders().set("action", "findById");
+    _vertx.eventBus().<JsonObject>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         resultHandler.handle(Future.failedFuture(res.cause()));
       } else {
-        resultHandler.handle(Future.succeededFuture(res.result().body() == null ? null : new Customer(res.result().body())));
-                      }
+        resultHandler.handle(Future.succeededFuture(res.result().body() != null ? new pl.piomin.services.vertx.customer.data.Customer((JsonObject)res.result().body()) : null));
+      }
     });
     return this;
   }
-
-  public CustomerRepository findByName(String name, Handler<AsyncResult<List<Customer>>> resultHandler) {
+  @Override
+  public CustomerRepository findByName(String name, Handler<AsyncResult<List<Customer>>> resultHandler){
     if (closed) {
       resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
       return this;
     }
     JsonObject _json = new JsonObject();
     _json.put("name", name);
+
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "findByName");
-    _vertx.eventBus().<JsonArray>send(_address, _json, _deliveryOptions, res -> {
+    _deliveryOptions.getHeaders().set("action", "findByName");
+    _vertx.eventBus().<JsonArray>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         resultHandler.handle(Future.failedFuture(res.cause()));
       } else {
-        resultHandler.handle(Future.succeededFuture(res.result().body().stream().map(o -> o instanceof Map ? new Customer(new JsonObject((Map) o)) : new Customer((JsonObject) o)).collect(Collectors.toList())));
+        resultHandler.handle(Future.succeededFuture(res.result().body().stream()
+          .map(v -> v != null ? new pl.piomin.services.vertx.customer.data.Customer((JsonObject)v) : null)
+          .collect(Collectors.toList())));
       }
     });
     return this;
   }
-
-  public CustomerRepository remove(String id, Handler<AsyncResult<Void>> resultHandler) {
+  @Override
+  public CustomerRepository remove(String id, Handler<AsyncResult<Void>> resultHandler){
     if (closed) {
       resultHandler.handle(Future.failedFuture(new IllegalStateException("Proxy is closed")));
       return this;
     }
     JsonObject _json = new JsonObject();
     _json.put("id", id);
+
     DeliveryOptions _deliveryOptions = (_options != null) ? new DeliveryOptions(_options) : new DeliveryOptions();
     _deliveryOptions.addHeader("action", "remove");
-    _vertx.eventBus().<Void>send(_address, _json, _deliveryOptions, res -> {
+    _deliveryOptions.getHeaders().set("action", "remove");
+    _vertx.eventBus().<Void>request(_address, _json, _deliveryOptions, res -> {
       if (res.failed()) {
         resultHandler.handle(Future.failedFuture(res.cause()));
       } else {
@@ -158,66 +172,5 @@ public class CustomerRepositoryVertxEBProxy implements CustomerRepository {
       }
     });
     return this;
-  }
-
-
-  private List<Character> convertToListChar(JsonArray arr) {
-    List<Character> list = new ArrayList<>();
-    for (Object obj: arr) {
-      Integer jobj = (Integer)obj;
-      list.add((char)(int)jobj);
-    }
-    return list;
-  }
-
-  private Set<Character> convertToSetChar(JsonArray arr) {
-    Set<Character> set = new HashSet<>();
-    for (Object obj: arr) {
-      Integer jobj = (Integer)obj;
-      set.add((char)(int)jobj);
-    }
-    return set;
-  }
-
-  private <T> Map<String, T> convertMap(Map map) {
-    if (map.isEmpty()) { 
-      return (Map<String, T>) map; 
-    } 
-     
-    Object elem = map.values().stream().findFirst().get(); 
-    if (!(elem instanceof Map) && !(elem instanceof List)) { 
-      return (Map<String, T>) map; 
-    } else { 
-      Function<Object, T> converter; 
-      if (elem instanceof List) { 
-        converter = object -> (T) new JsonArray((List) object); 
-      } else { 
-        converter = object -> (T) new JsonObject((Map) object); 
-      } 
-      return ((Map<String, T>) map).entrySet() 
-       .stream() 
-       .collect(Collectors.toMap(Map.Entry::getKey, converter::apply)); 
-    } 
-  }
-  private <T> List<T> convertList(List list) {
-    if (list.isEmpty()) { 
-          return (List<T>) list; 
-        } 
-     
-    Object elem = list.get(0); 
-    if (!(elem instanceof Map) && !(elem instanceof List)) { 
-      return (List<T>) list; 
-    } else { 
-      Function<Object, T> converter; 
-      if (elem instanceof List) { 
-        converter = object -> (T) new JsonArray((List) object); 
-      } else { 
-        converter = object -> (T) new JsonObject((Map) object); 
-      } 
-      return (List<T>) list.stream().map(converter).collect(Collectors.toList()); 
-    } 
-  }
-  private <T> Set<T> convertSet(List list) {
-    return new HashSet<T>(convertList(list));
   }
 }
