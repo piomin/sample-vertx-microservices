@@ -3,58 +3,58 @@ package pl.piomin.services.vertx.customer.data;
 import io.vertx.core.json.Json;
 
 public class Account {
-	
-	private String id;
-	private String number;
-	private int balance;
-	private String customerId;
 
-	public Account() {
-	
-	}
+    private String id;
+    private String number;
+    private int balance;
+    private String customerId;
 
-	public Account(String id, String number, int balance, String customerId) {
-		this.id = id;
-		this.number = number;
-		this.balance = balance;
-		this.customerId = customerId;
-	}
+    public Account() {
 
-	public String getId() {
-		return id;
-	}
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public Account(String id, String number, int balance, String customerId) {
+        this.id = id;
+        this.number = number;
+        this.balance = balance;
+        this.customerId = customerId;
+    }
 
-	public String getNumber() {
-		return number;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public void setNumber(String number) {
-		this.number = number;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public int getBalance() {
-		return balance;
-	}
+    public String getNumber() {
+        return number;
+    }
 
-	public void setBalance(int balance) {
-		this.balance = balance;
-	}
+    public void setNumber(String number) {
+        this.number = number;
+    }
 
-	public String getCustomerId() {
-		return customerId;
-	}
+    public int getBalance() {
+        return balance;
+    }
 
-	public void setCustomerId(String customerId) {
-		this.customerId = customerId;
-	}
-	
-	@Override
-	public String toString() {
-		return Json.encodePrettily(this);
-	}
-	
+    public void setBalance(int balance) {
+        this.balance = balance;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    @Override
+    public String toString() {
+        return Json.encodePrettily(this);
+    }
+
 }

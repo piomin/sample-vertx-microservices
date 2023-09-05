@@ -9,68 +9,68 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class Customer {
 
-	public static final String DB_TABLE = "customer";
+    public static final String DB_TABLE = "customer";
 
-	private String id;
-	private String name;
-	private int age;
-	private List<Account> accounts;
+    private String id;
+    private String name;
+    private int age;
+    private List<Account> accounts;
 
-	public Customer() {
+    public Customer() {
 
-	}
+    }
 
-	public Customer(String id, String name, int age) {
-		this.id = id;
-		this.name = name;
-		this.age = age;
-	}
+    public Customer(String id, String name, int age) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+    }
 
-	public Customer(JsonObject json) {
-		this.id = json.getString("id");
-		this.name = json.getString("name");
-		this.age = json.getInteger("age");
-	}
-	
-	public String getId() {
-		return id;
-	}
+    public Customer(JsonObject json) {
+        this.id = json.getString("id");
+        this.name = json.getString("name");
+        this.age = json.getInteger("age");
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public int getAge() {
-		return age;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setAge(int age) {
-		this.age = age;
-	}
+    public int getAge() {
+        return age;
+    }
 
-	public List<Account> getAccounts() {
-		return accounts;
-	}
+    public void setAge(int age) {
+        this.age = age;
+    }
 
-	public void setAccounts(List<Account> accounts) {
-		this.accounts = accounts;
-	}
+    public List<Account> getAccounts() {
+        return accounts;
+    }
 
-	public JsonObject toJson() {
-		return JsonObject.mapFrom(this);
-	}
+    public void setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
+    }
 
-	@Override
-	public String toString() {
-		return Json.encodePrettily(this);
-	}
-	
+    public JsonObject toJson() {
+        return JsonObject.mapFrom(this);
+    }
+
+    @Override
+    public String toString() {
+        return Json.encodePrettily(this);
+    }
+
 }

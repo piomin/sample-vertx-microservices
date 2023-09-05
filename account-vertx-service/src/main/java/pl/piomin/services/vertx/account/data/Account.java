@@ -7,70 +7,70 @@ import io.vertx.core.json.JsonObject;
 @DataObject
 public class Account {
 
-	public static final String DB_TABLE = "account";
-	
-	private String id;
-	private String number;
-	private int balance;
-	private String customerId;
+    public static final String DB_TABLE = "account";
 
-	public Account() {
-	
-	}
+    private String id;
+    private String number;
+    private int balance;
+    private String customerId;
 
-	public Account(String id, String number, int balance, String customerId) {
-		this.id = id;
-		this.number = number;
-		this.balance = balance;
-		this.customerId = customerId;
-	}
-	
-	public Account(JsonObject json) {
-		this.id = json.getString("id");
-		this.number = json.getString("number");
-		this.balance = json.getInteger("balance");
-		this.customerId = json.getString("customerId");
-	}
+    public Account() {
 
-	public String getId() {
-		return id;
-	}
+    }
 
-	public void setId(String id) {
-		this.id = id;
-	}
+    public Account(String id, String number, int balance, String customerId) {
+        this.id = id;
+        this.number = number;
+        this.balance = balance;
+        this.customerId = customerId;
+    }
 
-	public String getNumber() {
-		return number;
-	}
+    public Account(JsonObject json) {
+        this.id = json.getString("id");
+        this.number = json.getString("number");
+        this.balance = json.getInteger("balance");
+        this.customerId = json.getString("customerId");
+    }
 
-	public void setNumber(String number) {
-		this.number = number;
-	}
+    public String getId() {
+        return id;
+    }
 
-	public int getBalance() {
-		return balance;
-	}
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public void setBalance(int balance) {
-		this.balance = balance;
-	}
+    public String getNumber() {
+        return number;
+    }
 
-	public String getCustomerId() {
-		return customerId;
-	}
+    public void setNumber(String number) {
+        this.number = number;
+    }
 
-	public void setCustomerId(String customerId) {
-		this.customerId = customerId;
-	}
+    public int getBalance() {
+        return balance;
+    }
 
-	public JsonObject toJson() {
-		return JsonObject.mapFrom(this);
-	}
-	
-	@Override
-	public String toString() {
-		return Json.encodePrettily(this);
-	}
-	
+    public void setBalance(int balance) {
+        this.balance = balance;
+    }
+
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public JsonObject toJson() {
+        return JsonObject.mapFrom(this);
+    }
+
+    @Override
+    public String toString() {
+        return Json.encodePrettily(this);
+    }
+
 }

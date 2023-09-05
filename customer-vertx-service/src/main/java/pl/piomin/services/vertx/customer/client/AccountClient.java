@@ -17,25 +17,25 @@ import pl.piomin.services.vertx.customer.data.Account;
 
 public class AccountClient {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(AccountClient.class);
-	
-	private ServiceDiscovery discovery;
+    private static final Logger LOGGER = LoggerFactory.getLogger(AccountClient.class);
 
-	public AccountClient(ServiceDiscovery discovery) {
-		this.discovery = discovery;
-	}
-	
-	public AccountClient findCustomerAccounts(String customerId, Handler<AsyncResult<List<Account>>> resultHandler) {
-		discovery.getRecord(r -> r.getName().equals("account-service"), res -> {
-			LOGGER.info("Result: {}", res.result().getType());
-			ServiceReference ref = discovery.getReference(res.result());
-			WebClient client = ref.getAs(WebClient.class);
-			client.get("/account/customer/" + customerId).send(res2 -> {
-				LOGGER.info("Response: {}", res2.result().bodyAsString());
-				List<Account> accounts = res2.result().bodyAsJsonArray().stream().map(it -> Json.decodeValue(it.toString(), Account.class)).collect(Collectors.toList());
-				resultHandler.handle(Future.succeededFuture(accounts));
-			});
-		});
-		return this;
-	}
+    private ServiceDiscovery discovery;
+
+    public AccountClient(ServiceDiscovery discovery) {
+        this.discovery = discovery;
+    }
+
+    public AccountClient findCustomerAccounts(String customerId, Handler<AsyncResult<List<Account>>> resultHandler) {
+        discovery.getRecord(r -> r.getName().equals("account-service"), res -> {
+            LOGGER.info("Result: {}", res.result().getType());
+            ServiceReference ref = discovery.getReference(res.result());
+            WebClient client = ref.getAs(WebClient.class);
+            client.get("/account/customer/" + customerId).send(res2 -> {
+                LOGGER.info("Response: {}", res2.result().bodyAsString());
+                List<Account> accounts = res2.result().bodyAsJsonArray().stream().map(it -> Json.decodeValue(it.toString(), Account.class)).collect(Collectors.toList());
+                resultHandler.handle(Future.succeededFuture(accounts));
+            });
+        });
+        return this;
+    }
 }
