@@ -84,7 +84,7 @@ public class AccountRepositoryImpl implements AccountRepository {
     public AccountRepository remove(String id, Handler<AsyncResult<Void>> resultHandler) {
         client.removeDocument(Account.DB_TABLE, new JsonObject().put("_id", id), res -> {
             if (res.succeeded()) {
-                resultHandler.handle(Future.future());
+                resultHandler.handle(Future.succeededFuture());
             } else {
                 LOGGER.error("Account not found", res.cause());
                 resultHandler.handle(Future.failedFuture(res.cause()));

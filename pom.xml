@@ -7,7 +7,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <vertx.version>4.4.5</vertx.version>
         <sonar.projectKey>piomin_sample-vertx-microservices</sonar.projectKey>
         <sonar.organization>piomin</sonar.organization>
