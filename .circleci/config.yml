@@ -8,12 +8,15 @@ jobs:
       - checkout
       - run:
           name: Analyze on SonarCloud
-          command: mvn verify sonar:sonar
+          command: mvn verify sonar:sonar -DskipTests
 
 executors:
-  jdk:
-    docker:
-      - image: 'cimg/openjdk:20.0'
+  machine_executor_amd64:
+    machine:
+      image: ubuntu-2204:2022.04.2
+    environment:
+      architecture: "amd64"
+      platform: "linux/amd64"
 
 orbs:
   maven: circleci/maven@1.4.1
@@ -22,7 +25,7 @@ workflows:
   maven_test:
     jobs:
       - maven/test:
-          executor: jdk
+          executor: machine_executor_amd64
           verify_dependencies: false
       - analyze:
           context: SonarCloud
