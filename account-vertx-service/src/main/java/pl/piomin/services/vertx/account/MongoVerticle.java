@@ -12,6 +12,16 @@ import pl.piomin.services.vertx.account.data.AccountRepositoryImpl;
 
 public class MongoVerticle extends AbstractVerticle {
 
+    Integer port;
+
+    public MongoVerticle() {
+
+    }
+
+    public MongoVerticle(Integer port) {
+        this.port = port;
+    }
+
     @Override
     public void start() throws Exception {
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
@@ -20,7 +30,11 @@ public class MongoVerticle extends AbstractVerticle {
             JsonObject datasourceConfig = conf.result().getJsonObject("datasource");
             JsonObject o = new JsonObject();
             o.put("host", datasourceConfig.getString("host"));
-            o.put("port", datasourceConfig.getInteger("port"));
+            if (this.port == null) {
+                o.put("port", datasourceConfig.getInteger("port"));
+            } else {
+                o.put("port", port);
+            }
             o.put("db_name", datasourceConfig.getString("db_name"));
             final MongoClient client = MongoClient.createShared(vertx, o);
             final AccountRepository service = new AccountRepositoryImpl(client);

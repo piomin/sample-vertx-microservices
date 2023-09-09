@@ -1,5 +1,9 @@
 package pl.piomin.services.vertx.account;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.AfterAll;
@@ -10,6 +14,8 @@ import org.testcontainers.consul.ConsulContainer;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 @ExtendWith(VertxExtension.class)
 public class AccountServerTests {
 
@@ -18,9 +24,12 @@ public class AccountServerTests {
             .withConsulCommand("kv put config/account-service test=abc");
 
     @BeforeAll
-    static void init() {
+    static void init(Vertx vertx) {
         mongoDBContainer.start();
         consulContainer.start();
+
+        vertx.deployVerticle(new MongoVerticle(mongoDBContainer.getFirstMappedPort()));
+        vertx.deployVerticle(new AccountServer());
     }
 
     @AfterAll
@@ -30,7 +39,13 @@ public class AccountServerTests {
     }
 
     @Test
-    void startup() {
-
+    void startup(Vertx vertx, VertxTestContext testContext) {
+        HttpClient client = vertx.createHttpClient();
+        client.request(HttpMethod.GET, 2222, "localhost", "/account")
+                .compose(req -> req.send().compose(HttpClientResponse::body))
+                .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
+                    assertNotNull(buffer.toString());
+                    testContext.completeNow();
+                })));
     }
 }
