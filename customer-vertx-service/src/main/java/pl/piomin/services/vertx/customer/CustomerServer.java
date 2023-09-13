@@ -27,6 +27,16 @@ public class CustomerServer extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomerServer.class);
 
+    private Integer port;
+
+    public CustomerServer() {
+
+    }
+
+    public CustomerServer(Integer port) {
+        this.port = port;
+    }
+
     public static void main(String[] args) throws Exception {
         Vertx vertx = Vertx.vertx();
         vertx.deployVerticle(new MongoVerticle());
@@ -83,9 +93,13 @@ public class CustomerServer extends AbstractVerticle {
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
         retriever.getConfig(conf -> {
-            JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
-            discovery.registerServiceImporter(new ConsulServiceImporter(), new JsonObject().put("host", discoveryConfig.getString("host")).put("port", discoveryConfig.getInteger("port")).put("scan-period", 2000));
             vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
+            JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
+            discovery.registerServiceImporter(new ConsulServiceImporter(),
+                    new JsonObject()
+                            .put("host", discoveryConfig.getString("host"))
+                            .put("port", port == null ? discoveryConfig.getInteger("port") : port)
+                            .put("scan-period", 2000));
         });
 
     }

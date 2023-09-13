@@ -28,7 +28,7 @@ public class AccountServerTests {
         mongoDBContainer.start();
         consulContainer.start();
 
-        vertx.deployVerticle(new MongoVerticle(mongoDBContainer.getFirstMappedPort()));
+        vertx.deployVerticle(new MongoVerticle(mongoDBContainer.getMappedPort(27017)));
         vertx.deployVerticle(new AccountServer());
     }
 
