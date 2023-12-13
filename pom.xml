@@ -8,7 +8,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>17</java.version>
-        <vertx.version>4.5.0</vertx.version>
+        <vertx.version>4.5.1</vertx.version>
         <sonar.projectKey>piomin_sample-vertx-microservices</sonar.projectKey>
         <sonar.organization>piomin</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
