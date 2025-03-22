@@ -20,4 +20,17 @@
         <module>account-vertx-service</module>
         <module>customer-vertx-service</module>
     </modules>
+
+    <dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>io.vertx</groupId>
+				<artifactId>vertx-stack-depchain</artifactId>
+				<version>${vertx.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+    
 </project>
