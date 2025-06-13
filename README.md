@@ -1,4 +1,13 @@
-# Sample Vert.x Micro-services
+## Asynchronous Microservices with Vert.x [![Twitter](https://img.shields.io/twitter/follow/piotr_minkowski.svg?style=social&logo=twitter&label=Follow%20Me)](https://twitter.com/piotr_minkowski)
+
+[![CircleCI](https://circleci.com/gh/piomin/sample-vertx-microservices.svg?style=svg)](https://circleci.com/gh/piomin/sample-vertx-microservices)
+
+[![SonarCloud](https://sonarcloud.io/images/project_badges/sonarcloud-black.svg)](https://sonarcloud.io/dashboard?id=piomin_sample-vertx-microservices)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=piomin_sample-vertx-microservices&metric=bugs)](https://sonarcloud.io/dashboard?id=piomin_sample-vertx-microservices)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=piomin_sample-vertx-microservices&metric=coverage)](https://sonarcloud.io/dashboard?id=piomin_sample-vertx-microservices)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=piomin_sample-vertx-microservices&metric=ncloc)](https://sonarcloud.io/dashboard?id=piomin_sample-vertx-microservices)
+
+## Sample Vert.x Micro-services
 
 This repository demonstrates a **poly-repo** style Vert.x 4 project written in Java 21.  
 It contains two autonomous micro-services that communicate through HTTP and are discoverable via **Consul**.
@@ -13,7 +22,7 @@ sequenceDiagram
     Customer Service--&gt;>Client: Enriched customer JSON
 ```
 
-## Modules
+### Modules
 | Module | Port | Purpose |
 |--------|------|---------|
 | `account-vertx-service`  | 2222 | CRUD API for accounts backed by MongoDB |
@@ -28,14 +37,14 @@ Both are declared in the parent `pom.xml`:
 </modules>
 ```
 
-## Tech Stack
+### Tech Stack
 * Java 21  
 * Vert.x 4.5.x (`vertx-web`, `vertx-service-discovery`, `vertx-web-client`)  
 * MongoDB ⁄ `vertx-mongo-client`  
 * Consul 8500 for service registry  
 * Maven 3.9 – multi-module build  
 
-## Building
+### Building
 
 ```bash
 mvn clean package
@@ -43,7 +52,7 @@ mvn clean package
 
 Each sub-module generates a **fat jar** (`*-runner.jar`) under `target/`.
 
-## Running the services
+### Running the services
 
 ```bash
 # terminal 1
@@ -63,13 +72,13 @@ Configuration is loaded from `src/main/resources/application.json`:
 }
 ```
 
-### Prerequisites
+#### Prerequisites
 * MongoDB listening on `27017`  
 * Consul agent on `localhost:8500`  
 
-## REST API
+### REST API
 
-### Account Service (port 2222)
+#### Account Service (port 2222)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -79,7 +88,7 @@ Configuration is loaded from `src/main/resources/application.json`:
 | POST   | `/account`                 | Create account (body = JSON) |
 | DELETE | `/account/{id}`            | Delete account |
 
-### Customer Service (port 3333)
+#### Customer Service (port 3333)
 
 | Method | Path | Description |
 |--------|------|-------------|
@@ -89,7 +98,7 @@ Configuration is loaded from `src/main/resources/application.json`:
 | POST   | `/customer`             | Create customer |
 | DELETE | `/customer/{id}`        | Delete customer |
 
-## Quick test
+### Quick test
 
 ```bash
 curl -X POST localhost:2222/account \
@@ -99,7 +108,7 @@ curl -X POST localhost:2222/account \
 curl localhost:3333/customer/cust1
 ```
 
-## Service Discovery
+### Service Discovery
 
 On startup, **Account Service** registers itself in Consul:
 
@@ -113,6 +122,6 @@ client.put(8500, "localhost", "/v1/agent/service/register").sendJsonObject(...);
 discovery.registerServiceImporter(new ConsulServiceImporter(), jsonConfig);
 ```
 
-## Contributing & License
+### Contributing & License
 PRs are welcome – please open an issue first.  
 Distributed under the MIT License.
