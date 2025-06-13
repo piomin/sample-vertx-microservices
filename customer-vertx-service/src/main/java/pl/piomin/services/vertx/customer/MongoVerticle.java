@@ -8,6 +8,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.serviceproxy.ServiceBinder;
 import pl.piomin.services.vertx.customer.data.CustomerRepository;
+import pl.piomin.services.vertx.customer.data.CustomerRepositoryImpl;
 
 public class MongoVerticle extends AbstractVerticle {
 

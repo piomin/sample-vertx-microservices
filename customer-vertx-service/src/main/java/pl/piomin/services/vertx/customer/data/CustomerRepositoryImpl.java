@@ -48,7 +48,7 @@ public class CustomerRepositoryImpl implements CustomerRepository {
     public Future<Customer> findById(String id) {
         return client.find(Customer.DB_TABLE, new JsonObject().put("_id", id)).map(res -> {
             List<Customer> accounts = res.stream().map(it ->
-                            new Account(
+                            new Customer(
                                     it.getString("_id"),
                                     it.getString("name"),
                                     it.getInteger("age")))
