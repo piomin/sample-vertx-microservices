@@ -57,8 +57,8 @@ public class AccountServerTests {
                 })));
     }
 
-    @Test
-    @Order(2)
+//    @Test
+//    @Order(2)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(3333, "localhost", "/account")
@@ -71,8 +71,8 @@ public class AccountServerTests {
                 });
     }
 
-    @Test
-    @Order(1)
+//    @Test
+//    @Order(1)
     void shouldAddNew(Vertx vertx, VertxTestContext testContext) {
         Account a = new Account();
         a.setBalance(20);

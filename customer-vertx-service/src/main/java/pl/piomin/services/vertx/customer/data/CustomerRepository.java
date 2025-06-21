@@ -12,13 +12,9 @@ import java.util.List;
 public interface CustomerRepository {
 
     Future<Customer> save(Customer customer);
-
     Future<List<Customer>> findAll();
-
     Future<Customer> findById(String id);
-
     Future<List<Customer>> findByName(String name);
-
     Future<Boolean> remove(String id);
 
     static CustomerRepository createProxy(Vertx vertx, String address) {
