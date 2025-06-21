@@ -16,7 +16,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 import pl.piomin.services.vertx.account.data.Account;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(VertxExtension.class)
 public class AccountServerTests {
@@ -52,9 +52,11 @@ public class AccountServerTests {
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
+                    assertEquals(!res.bodyAsJsonArray().isEmpty(), true, "Expected at least one account");
                     assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
@@ -73,7 +75,8 @@ public class AccountServerTests {
                     assertNotNull(res.bodyAsJson(Account.class).getId());
                     id = res.bodyAsJson(Account.class).getId();
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
