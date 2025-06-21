@@ -48,17 +48,29 @@ public class CustomerServer extends AbstractVerticle {
         router.route("/customer/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/customer").handler(BodyHandler.create());
         router.get("/customer/:id").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findById(rc.request().getParam("id"))));
+            repository.findById(rc.request().getParam("id")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.get("/customer/name/:name").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findByName(rc.request().getParam("name"))));
+            repository.findByName(rc.request().getParam("name")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.get("/customer").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findAll()));
+            repository.findAll().onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.post("/customer").produces("application/json").handler(rc -> {
             Customer c = rc.body().asPojo(Customer.class);
-            rc.response().end(Json.encodePrettily(repository.save(c)));
+            repository.save(c).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.delete("/customer/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id"));

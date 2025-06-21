@@ -8,9 +8,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +20,7 @@ import pl.piomin.services.vertx.customer.data.Customer;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(VertxExtension.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class CustomerServerTests {
 
     final static Logger LOGGER = LoggerFactory.getLogger(CustomerServerTests.class);
@@ -45,6 +44,7 @@ public class CustomerServerTests {
     }
 
     @Test
+    @Order(2)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         HttpClient client = vertx.createHttpClient();
         client.request(HttpMethod.GET, 3333, "localhost", "/customer")
@@ -57,6 +57,7 @@ public class CustomerServerTests {
     }
 
     @Test
+    @Order(1)
     void shouldAddNew(Vertx vertx, VertxTestContext testContext) {
         Customer c = new Customer();
         c.setAge(20);
