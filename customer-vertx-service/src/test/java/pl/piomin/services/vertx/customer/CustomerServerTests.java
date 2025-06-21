@@ -1,11 +1,7 @@
 package pl.piomin.services.vertx.customer;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.WebClient;
-import io.vertx.ext.web.codec.BodyCodec;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.*;
@@ -28,6 +24,8 @@ public class CustomerServerTests {
     final static ConsulContainer consulContainer = new ConsulContainer("consul:1.14")
             .withConsulCommand("kv put config/customer-service test=abc");
 
+    static String id;
+
     @BeforeAll
     static void init(Vertx vertx) {
         mongoDBContainer.start();
@@ -46,14 +44,15 @@ public class CustomerServerTests {
     @Test
     @Order(2)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
-        HttpClient client = vertx.createHttpClient();
-        client.request(HttpMethod.GET, 3333, "localhost", "/customer")
-                .compose(req -> req.send().compose(HttpClientResponse::body))
-                .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
-                    assertNotNull(buffer.toString());
-                    LOGGER.info(buffer.toString());
+        WebClient client = WebClient.create(vertx);
+        client.get(3333, "localhost", "/customer")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertNotNull(res.body());
+                    assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
-                })));
+                });
     }
 
     @Test
@@ -69,7 +68,39 @@ public class CustomerServerTests {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
                     assertNotNull(res.bodyAsJson(Customer.class).getId());
+                    id = res.bodyAsJson(Customer.class).getId();
                     testContext.completeNow();
                 });
     }
+
+    @Test
+    @Order(2)
+    void shouldFindByName(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(3333, "localhost", "/customer/name/Test")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertNotNull(res.body());
+                    assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(2)
+    void shouldFindById(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(3333, "localhost", "/customer/" + id)
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertNotNull(res.body());
+                    assertNotNull(res.bodyAsJson(Customer.class).getId());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
 }

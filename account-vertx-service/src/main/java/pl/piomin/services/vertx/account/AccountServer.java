@@ -1,10 +1,5 @@
 package pl.piomin.services.vertx.account;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -18,6 +13,8 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.piomin.services.vertx.account.data.Account;
 import pl.piomin.services.vertx.account.data.AccountRepository;
 
@@ -40,17 +37,46 @@ public class AccountServer extends AbstractVerticle {
         router.route("/account/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
         router.get("/account/:id").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findById(rc.request().getParam("id"))));
+            repository.findById(rc.request().getParam("id")).onComplete(res -> {
+                if (res.succeeded()) {
+                    Account a = res.result();
+                    if (a == null) {
+                        rc.response().setStatusCode(404).end();
+                    } else {
+                        rc.response().end(Json.encodePrettily(a));
+                    }
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.get("/account/customer/:customer").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findByCustomer(rc.request().getParam("customer"))));
+            repository.findByCustomer(rc.request().getParam("customer")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.get("/account").produces("application/json").handler(rc -> {
-            rc.response().end(Json.encodePrettily(repository.findAll()));
+            repository.findAll().onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.post("/account").produces("application/json").handler(rc -> {
             Account a = rc.body().asPojo(Account.class);
-            rc.response().end(Json.encodePrettily(repository.save(a)));
+            repository.save(a).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.delete("/account/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id"));
@@ -71,7 +97,7 @@ public class AccountServer extends AbstractVerticle {
                     .put("Tags", new JsonArray().add("http-endpoint"));
             client.put(discoveryConfig.getInteger("port"), discoveryConfig.getString("host"), "/v1/agent/service/register")
                     .sendJsonObject(json).onComplete(   res -> {
-                        LOGGER.info("Consul registration status: {}", res.result().statusCode());
+//                        LOGGER.info("Consul registration status: {}", res.result().statusCode());
                     });
         });
 

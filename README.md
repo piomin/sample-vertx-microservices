@@ -18,8 +18,8 @@ sequenceDiagram
     autonumber
     Client->>Customer Service: GET /customer/{id}
     Customer Service->>+Account Service: GET /account/customer/{customerId}
-    Account Service--&gt;>-Customer Service: JSON array of accounts
-    Customer Service--&gt;>Client: Enriched customer JSON
+    Account Service-->>-Customer Service: JSON array of accounts
+    Customer Service-->>Client: Enriched customer JSON
 ```
 
 ### Modules

@@ -50,27 +50,44 @@ public class CustomerServer extends AbstractVerticle {
         router.get("/customer/:id").produces("application/json").handler(rc -> {
             repository.findById(rc.request().getParam("id")).onComplete(res -> {
                 if (res.succeeded()) {
-                    rc.response().end(Json.encodePrettily(res.result()));
-                }});
+                    Customer c = res.result();
+                    if (c == null) {
+                        rc.response().setStatusCode(404).end();
+                    } else {
+                        rc.response().end(Json.encodePrettily(c));
+                    }
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.get("/customer/name/:name").produces("application/json").handler(rc -> {
             repository.findByName(rc.request().getParam("name")).onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
-                }});
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.get("/customer").produces("application/json").handler(rc -> {
             repository.findAll().onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
-                }});
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.post("/customer").produces("application/json").handler(rc -> {
             Customer c = rc.body().asPojo(Customer.class);
             repository.save(c).onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
-                }});
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
         router.delete("/customer/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id"));
