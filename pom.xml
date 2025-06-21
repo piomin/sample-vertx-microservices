@@ -22,19 +22,6 @@
         <module>account-vertx-service</module>
         <module>customer-vertx-service</module>
     </modules>
-
-<!--    <repositories>-->
-<!--        <repository>-->
-<!--            <id>vertx-stack</id>-->
-<!--            <url>https://repo.vertx.io/artifactory/vertx-stack</url>-->
-<!--            <releases>-->
-<!--                <enabled>true</enabled>-->
-<!--            </releases>-->
-<!--            <snapshots>-->
-<!--                <enabled>false</enabled>-->
-<!--            </snapshots>-->
-<!--        </repository>-->
-<!--    </repositories>-->
     
     <dependencyManagement>
         <dependencies>
