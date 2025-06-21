@@ -1,9 +1,6 @@
 package pl.piomin.services.vertx.account;
 
 import io.vertx.core.Vertx;
-import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientResponse;
-import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -21,7 +18,7 @@ import pl.piomin.services.vertx.account.data.Account;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-//@ExtendWith(VertxExtension.class)
+@ExtendWith(VertxExtension.class)
 public class AccountServerTests {
 
     final static Logger LOGGER = LoggerFactory.getLogger(AccountServerTests.class);
@@ -31,7 +28,7 @@ public class AccountServerTests {
 
     static String id;
 
-//    @BeforeAll
+    @BeforeAll
     static void init(Vertx vertx) {
         mongoDBContainer.start();
         consulContainer.start();
@@ -40,28 +37,17 @@ public class AccountServerTests {
         vertx.deployVerticle(new AccountServer());
     }
 
-//    @AfterAll
+    @AfterAll
     static void destroy() {
         mongoDBContainer.stop();
         consulContainer.stop();
     }
 
-//    @Test
-    void startup(Vertx vertx, VertxTestContext testContext) {
-        HttpClient client = vertx.createHttpClient();
-        client.request(HttpMethod.GET, 2222, "localhost", "/account")
-                .compose(req -> req.send().compose(HttpClientResponse::body))
-                .onComplete(testContext.succeeding(buffer -> testContext.verify(() -> {
-                    assertNotNull(buffer.toString());
-                    testContext.completeNow();
-                })));
-    }
-
-//    @Test
-//    @Order(2)
+    @Test
+    @Order(2)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
-        client.get(3333, "localhost", "/account")
+        client.get(2222, "localhost", "/account")
                 .send()
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
@@ -71,15 +57,15 @@ public class AccountServerTests {
                 });
     }
 
-//    @Test
-//    @Order(1)
+    @Test
+    @Order(1)
     void shouldAddNew(Vertx vertx, VertxTestContext testContext) {
         Account a = new Account();
         a.setBalance(20);
         a.setCustomerId("123");
         a.setNumber("1234567890");
         WebClient client = WebClient.create(vertx);
-        client.post(3333, "localhost", "/account")
+        client.post(2222, "localhost", "/account")
                 .sendJson(a)
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
@@ -88,5 +74,20 @@ public class AccountServerTests {
                     id = res.bodyAsJson(Account.class).getId();
                     testContext.completeNow();
                 });
+    }
+
+    @Test
+    @Order(2)
+    void shouldFindById(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/account/" + id)
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertNotNull(res.body());
+                    assertNotNull(res.bodyAsJson(Account.class).getId());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
     }
 }

@@ -39,7 +39,14 @@ public class AccountServer extends AbstractVerticle {
         router.get("/account/:id").produces("application/json").handler(rc -> {
             repository.findById(rc.request().getParam("id")).onComplete(res -> {
                 if (res.succeeded()) {
-                    rc.response().end(Json.encodePrettily(res.result()));
+                    Account a = res.result();
+                    if (a == null) {
+                        rc.response().setStatusCode(404).end();
+                    } else {
+                        rc.response().end(Json.encodePrettily(a));
+                    }
+                } else {
+                    rc.response().setStatusCode(500).end();
                 }
             });
         });
@@ -47,6 +54,8 @@ public class AccountServer extends AbstractVerticle {
             repository.findByCustomer(rc.request().getParam("customer")).onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
                 }
             });
         });
@@ -54,6 +63,8 @@ public class AccountServer extends AbstractVerticle {
             repository.findAll().onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
                 }
             });
         });
@@ -62,6 +73,8 @@ public class AccountServer extends AbstractVerticle {
             repository.save(a).onComplete(res -> {
                 if (res.succeeded()) {
                     rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
                 }
             });
         });
