@@ -84,7 +84,7 @@ public class AccountServer extends AbstractVerticle {
                     .put("Tags", new JsonArray().add("http-endpoint"));
             client.put(discoveryConfig.getInteger("port"), discoveryConfig.getString("host"), "/v1/agent/service/register")
                     .sendJsonObject(json).onComplete(   res -> {
-                        LOGGER.info("Consul registration status: {}", res.result().statusCode());
+//                        LOGGER.info("Consul registration status: {}", res.result().statusCode());
                     });
         });
 
