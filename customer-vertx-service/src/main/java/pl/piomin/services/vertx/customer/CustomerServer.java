@@ -1,10 +1,5 @@
 package pl.piomin.services.vertx.customer;
 
-import java.util.List;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.vertx.config.ConfigRetriever;
 import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
@@ -18,7 +13,8 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.consul.ConsulServiceImporter;
-import pl.piomin.services.vertx.customer.client.AccountClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pl.piomin.services.vertx.customer.data.Customer;
 import pl.piomin.services.vertx.customer.data.CustomerRepository;
 
@@ -52,47 +48,38 @@ public class CustomerServer extends AbstractVerticle {
         router.route("/customer/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/customer").handler(BodyHandler.create());
         router.get("/customer/:id").produces("application/json").handler(rc -> {
-            repository.findById(rc.request().getParam("id"), res -> {
-                Customer customer = res.result();
-                LOGGER.info("Found: {}", customer);
-                new AccountClient(discovery).findCustomerAccounts(customer.getId(), res2 -> {
-                    customer.setAccounts(res2.result());
-                    rc.response().end(customer.toString());
-                });
-            });
+            repository.findById(rc.request().getParam("id")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.get("/customer/name/:name").produces("application/json").handler(rc -> {
-            repository.findByName(rc.request().getParam("name"), res -> {
-                List<Customer> customers = res.result();
-                LOGGER.info("Found: {}", customers);
-                rc.response().end(Json.encodePrettily(customers));
-            });
+            repository.findByName(rc.request().getParam("name")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.get("/customer").produces("application/json").handler(rc -> {
-            repository.findAll(res -> {
-                List<Customer> customers = res.result();
-                LOGGER.info("Found all: {}", customers);
-                rc.response().end(Json.encodePrettily(customers));
-            });
+            repository.findAll().onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.post("/customer").produces("application/json").handler(rc -> {
-            Customer c = Json.decodeValue(rc.getBodyAsString(), Customer.class);
-            repository.save(c, res -> {
-                Customer customer = res.result();
-                LOGGER.info("Created: {}", customer);
-                rc.response().end(customer.toString());
-            });
+            Customer c = rc.body().asPojo(Customer.class);
+            repository.save(c).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                }});
         });
         router.delete("/customer/:id").handler(rc -> {
-            repository.remove(rc.request().getParam("id"), res -> {
-                LOGGER.info("Removed: {}", rc.request().getParam("id"));
-                rc.response().setStatusCode(200);
-            });
+            repository.remove(rc.request().getParam("id"));
+            rc.response().setStatusCode(200);
         });
 
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
-        retriever.getConfig(conf -> {
+        retriever.getConfig().onComplete(conf -> {
             vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
             JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
             discovery.registerServiceImporter(new ConsulServiceImporter(),

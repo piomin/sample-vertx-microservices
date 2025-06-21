@@ -1,31 +1,32 @@
 package pl.piomin.services.vertx.account.data;
 
-import java.util.List;
-
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.ext.mongo.MongoClient;
 
+import java.util.List;
+
 @ProxyGen
 public interface AccountRepository {
 
-    @Fluent
-    AccountRepository save(Account account, Handler<AsyncResult<Account>> resultHandler);
+//    @Fluent
+    Future<Account> save(Account account);
 
-    @Fluent
-    AccountRepository findAll(Handler<AsyncResult<List<Account>>> resultHandler);
+//    @Fluent
+    Future<List<Account>> findAll();
 
-    @Fluent
-    AccountRepository findById(String id, Handler<AsyncResult<Account>> resultHandler);
+//    @Fluent
+    Future<Account> findById(String id);
 
-    @Fluent
-    AccountRepository findByCustomer(String customerId, Handler<AsyncResult<List<Account>>> resultHandler);
+//    @Fluent
+    Future<List<Account>> findByCustomer(String customerId);
 
-    @Fluent
-    AccountRepository remove(String id, Handler<AsyncResult<Void>> resultHandler);
+//    @Fluent
+    Future<Boolean> remove(String id);
 
     static AccountRepository createProxy(Vertx vertx, String address) {
         return new AccountRepositoryVertxEBProxy(vertx, address);

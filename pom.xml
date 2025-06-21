@@ -8,7 +8,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>21</java.version>
-        <vertx.version>4.5.16</vertx.version>
+        <vertx.version>5.0.0</vertx.version>
+        <testcontainers.version>1.19.7</testcontainers.version>
+        <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <sonar.projectKey>piomin_sample-vertx-microservices</sonar.projectKey>
         <sonar.organization>piomin</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -20,17 +22,30 @@
         <module>account-vertx-service</module>
         <module>customer-vertx-service</module>
     </modules>
-
+    
     <dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-stack-depchain</artifactId>
-				<version>${vertx.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-stack-depchain</artifactId>
+                <version>${vertx.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <!-- RxJava3 is the recommended version for Vert.x 5 -->
+            <dependency>
+                <groupId>io.vertx</groupId>
+                <artifactId>vertx-rx-java3</artifactId>
+                <version>${vertx.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.testcontainers</groupId>
+                <artifactId>testcontainers-bom</artifactId>
+                <version>${testcontainers.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
 </project>

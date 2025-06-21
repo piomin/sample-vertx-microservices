@@ -23,74 +23,58 @@ public class CustomerRepositoryImpl implements CustomerRepository {
     }
 
     @Override
-    public CustomerRepository save(Customer customer, Handler<AsyncResult<Customer>> resultHandler) {
+    public Future<Customer> save(Customer customer) {
         JsonObject json = JsonObject.mapFrom(customer);
-        client.save(Customer.DB_TABLE, json, res -> {
-            if (res.succeeded()) {
-                LOGGER.info("Customer created: {}", res.result());
-                customer.setId(res.result());
-                resultHandler.handle(Future.succeededFuture(customer));
-            } else {
-                LOGGER.error("Customer not created", res.cause());
-                resultHandler.handle(Future.failedFuture(res.cause()));
-            }
+        return client.save(Customer.DB_TABLE, json).map(res -> {
+            customer.setId(res);
+            return customer;
         });
-        return this;
     }
 
     @Override
-    public CustomerRepository findAll(Handler<AsyncResult<List<Customer>>> resultHandler) {
-        client.find(Customer.DB_TABLE, new JsonObject(), res -> {
-            if (res.succeeded()) {
-                List<Customer> customers = res.result().stream().map(it -> new Customer(it.getString("_id"), it.getString("name"), it.getInteger("age"))).collect(Collectors.toList());
-                resultHandler.handle(Future.succeededFuture(customers));
-            } else {
-                LOGGER.error("Customer not found", res.cause());
-                resultHandler.handle(Future.failedFuture(res.cause()));
-            }
+    public Future<List<Customer>> findAll() {
+        return client.find(Customer.DB_TABLE, new JsonObject()).map(res -> {
+            List<Customer> customers = res.stream().map(it ->
+                            new Customer(
+                                    it.getString("_id"),
+                                    it.getString("name"),
+                                    it.getInteger("age")))
+                    .toList();
+            return customers;
         });
-        return this;
     }
 
     @Override
-    public CustomerRepository findById(String id, Handler<AsyncResult<Customer>> resultHandler) {
-        client.find(Customer.DB_TABLE, new JsonObject().put("_id", id), res -> {
-            if (res.succeeded()) {
-                List<Customer> customers = res.result().stream().map(it -> new Customer(it.getString("_id"), it.getString("name"), it.getInteger("age"))).collect(Collectors.toList());
-                resultHandler.handle(Future.succeededFuture(customers.get(0)));
-            } else {
-                LOGGER.error("Account not found", res.cause());
-                resultHandler.handle(Future.failedFuture(res.cause()));
-            }
+    public Future<Customer> findById(String id) {
+        return client.find(Customer.DB_TABLE, new JsonObject().put("_id", id)).map(res -> {
+            List<Customer> accounts = res.stream().map(it ->
+                            new Customer(
+                                    it.getString("_id"),
+                                    it.getString("name"),
+                                    it.getInteger("age")))
+                    .toList();
+            return accounts.getFirst();
         });
-        return this;
     }
 
     @Override
-    public CustomerRepository findByName(String name, Handler<AsyncResult<List<Customer>>> resultHandler) {
-        client.find(Customer.DB_TABLE, new JsonObject().put("name", name), res -> {
-            if (res.succeeded()) {
-                List<Customer> customers = res.result().stream().map(it -> new Customer(it.getString("_id"), it.getString("name"), it.getInteger("age"))).collect(Collectors.toList());
-                resultHandler.handle(Future.succeededFuture(customers));
-            } else {
-                LOGGER.error("Account not found", res.cause());
-                resultHandler.handle(Future.failedFuture(res.cause()));
-            }
+    public Future<List<Customer>> findByName(String name) {
+        return client.find(Customer.DB_TABLE, new JsonObject().put("name", name)).map(res -> {
+            List<Customer> customers = res.stream().map(it ->
+                            new Customer(
+                                    it.getString("_id"),
+                                    it.getString("name"),
+                                    it.getInteger("age")))
+                    .toList();
+            return customers;
         });
-        return this;
     }
 
     @Override
-    public CustomerRepository remove(String id, Handler<AsyncResult<Void>> resultHandler) {
-        client.removeDocument(Customer.DB_TABLE, new JsonObject().put("_id", id), res -> {
-            if (res.succeeded()) {
-                resultHandler.handle(Future.succeededFuture());
-            } else {
-                LOGGER.error("Customer not found", res.cause());
-                resultHandler.handle(Future.failedFuture(res.cause()));
-            }
+    public Future<Boolean> remove(String id) {
+        return client.removeDocument(Customer.DB_TABLE, new JsonObject().put("_id", id)).map(res -> {
+            return res.getRemovedCount() > 0;
         });
-        return this;
     }
 
 }
