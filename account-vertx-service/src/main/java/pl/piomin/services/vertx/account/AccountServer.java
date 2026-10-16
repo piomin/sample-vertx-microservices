@@ -79,8 +79,13 @@ public class AccountServer extends AbstractVerticle {
             });
         });
         router.delete("/account/:id").handler(rc -> {
-            repository.remove(rc.request().getParam("id"));
-            rc.response().setStatusCode(200);
+            repository.remove(rc.request().getParam("id")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().setStatusCode(200).end();
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
 
         WebClient client = WebClient.create(vertx);
