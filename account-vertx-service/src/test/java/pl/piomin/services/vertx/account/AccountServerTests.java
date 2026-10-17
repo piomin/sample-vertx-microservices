@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AccountServerTests {
 
     final static Logger LOGGER = LoggerFactory.getLogger(AccountServerTests.class);
-    final static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:5.0"));
+    final static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:8.0"));
     final static ConsulContainer consulContainer = new ConsulContainer("consul:1.14")
             .withConsulCommand("kv put config/account-service test=abc");
 
