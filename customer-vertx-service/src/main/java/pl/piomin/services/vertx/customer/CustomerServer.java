@@ -6,6 +6,7 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
@@ -24,6 +25,8 @@ public class CustomerServer extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomerServer.class);
 
     private Integer port;
+    private ServiceDiscovery discovery;
+    private HttpServer httpServer;
 
     public CustomerServer() {
 
@@ -40,8 +43,8 @@ public class CustomerServer extends AbstractVerticle {
     }
 
     @Override
-    public void start() throws Exception {
-        ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
+    public void start() {
+        discovery = ServiceDiscovery.create(vertx);
         CustomerRepository repository = CustomerRepository.createProxy(vertx, "customer-service");
 
         Router router = Router.router(vertx);
@@ -97,7 +100,8 @@ public class CustomerServer extends AbstractVerticle {
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
         retriever.getConfig().onComplete(conf -> {
-            vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
+            httpServer = vertx.createHttpServer();
+            httpServer.requestHandler(router).listen(conf.result().getInteger("port"));
             JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
             discovery.registerServiceImporter(new ConsulServiceImporter(),
                     new JsonObject()
@@ -106,6 +110,16 @@ public class CustomerServer extends AbstractVerticle {
                             .put("scan-period", 2000));
         });
 
+    }
+
+    @Override
+    public void stop() {
+        if (httpServer != null) {
+            httpServer.close();
+        }
+        if (discovery != null) {
+            discovery.close();
+        }
     }
 
 }

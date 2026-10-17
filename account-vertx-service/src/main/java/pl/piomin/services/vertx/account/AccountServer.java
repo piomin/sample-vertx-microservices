@@ -6,6 +6,7 @@ import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -23,6 +24,11 @@ public class AccountServer extends AbstractVerticle {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountServer.class);
 
+    private WebClient client;
+    private HttpServer httpServer;
+    private String discoveryHost;
+    private int discoveryPort;
+
     public static void main(String[] args) throws Exception {
         Vertx vertx = Vertx.vertx();
         vertx.deployVerticle(new MongoVerticle());
@@ -30,7 +36,7 @@ public class AccountServer extends AbstractVerticle {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() {
         AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
 
         Router router = Router.router(vertx);
@@ -83,24 +89,46 @@ public class AccountServer extends AbstractVerticle {
             rc.response().setStatusCode(200);
         });
 
-        WebClient client = WebClient.create(vertx);
+        client = WebClient.create(vertx);
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
         retriever.getConfig().onComplete(conf -> {
             JsonObject discoveryConfig = conf.result().getJsonObject("discovery");
-            vertx.createHttpServer().requestHandler(router).listen(conf.result().getInteger("port"));
+            discoveryHost = discoveryConfig.getString("host");
+            discoveryPort = discoveryConfig.getInteger("port");
+            httpServer = vertx.createHttpServer();
+            httpServer.requestHandler(router).listen(conf.result().getInteger("port"));
             JsonObject json = new JsonObject()
                     .put("ID", "account-service-1")
                     .put("Name", "account-service")
                     .put("Address", "127.0.0.1")
                     .put("Port", 2222)
                     .put("Tags", new JsonArray().add("http-endpoint"));
-            client.put(discoveryConfig.getInteger("port"), discoveryConfig.getString("host"), "/v1/agent/service/register")
-                    .sendJsonObject(json).onComplete(   res -> {
+            client.put(discoveryPort, discoveryHost, "/v1/agent/service/register")
+                    .sendJsonObject(json).onComplete(res -> {
 //                        LOGGER.info("Consul registration status: {}", res.result().statusCode());
                     });
         });
 
+    }
+
+    @Override
+    public void stop() {
+        if (client != null && discoveryHost != null) {
+            client.put(discoveryPort, discoveryHost, "/v1/agent/service/deregister/account-service-1")
+                    .send()
+                    .onComplete(res -> {
+                        if (res.succeeded()) {
+                            LOGGER.info("Deregistered account-service-1 from Consul");
+                        } else {
+                            LOGGER.warn("Failed to deregister from Consul: {}", res.cause().getMessage());
+                        }
+                    });
+            client.close();
+        }
+        if (httpServer != null) {
+            httpServer.close();
+        }
     }
 
 }

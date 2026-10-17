@@ -13,6 +13,7 @@ import pl.piomin.services.vertx.account.data.AccountRepositoryImpl;
 public class MongoVerticle extends AbstractVerticle {
 
     Integer port;
+    private MongoClient client;
 
     public MongoVerticle() {
 
@@ -23,7 +24,7 @@ public class MongoVerticle extends AbstractVerticle {
     }
 
     @Override
-    public void start() throws Exception {
+    public void start() {
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));
         retriever.getConfig().onComplete(conf -> {
@@ -36,7 +37,7 @@ public class MongoVerticle extends AbstractVerticle {
                 o.put("port", port);
             }
             o.put("db_name", datasourceConfig.getString("db_name"));
-            final MongoClient client = MongoClient.createShared(vertx, o);
+            client = MongoClient.createShared(vertx, o);
             final AccountRepository service = new AccountRepositoryImpl(client);
             
             // Register the service proxy
@@ -44,6 +45,13 @@ public class MongoVerticle extends AbstractVerticle {
                 .setAddress("account-service")
                 .register(AccountRepository.class, service);
         });
+    }
+
+    @Override
+    public void stop() {
+        if (client != null) {
+            client.close();
+        }
     }
 
 }
