@@ -1,14 +1,11 @@
 package pl.piomin.services.vertx.customer.data;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 
@@ -16,7 +13,7 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomerRepositoryImpl.class);
 
-    MongoClient client;
+    private final MongoClient client;
 
     public CustomerRepositoryImpl(final MongoClient client) {
         this.client = client;
