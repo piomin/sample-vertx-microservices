@@ -90,8 +90,13 @@ public class CustomerServer extends AbstractVerticle {
             });
         });
         router.delete("/customer/:id").handler(rc -> {
-            repository.remove(rc.request().getParam("id"));
-            rc.response().setStatusCode(200);
+            repository.remove(rc.request().getParam("id")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().setStatusCode(res.result() ? 200 : 404).end();
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
         });
 
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
