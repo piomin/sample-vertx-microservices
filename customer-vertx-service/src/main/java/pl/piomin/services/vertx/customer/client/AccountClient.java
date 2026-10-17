@@ -32,8 +32,8 @@ public class AccountClient {
                 WebClient client = ref.getAs(WebClient.class);
                 return client.get("/account/customer/" + customerId)
                     .send()
-                    .onComplete(ar -> ref.release())
                     .compose(response -> {
+                        ref.release();
                         if (response.statusCode() != 200) {
                             return Future.failedFuture("Failed to fetch accounts: " + response.statusMessage());
                         }
