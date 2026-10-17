@@ -1,6 +1,5 @@
 package pl.piomin.services.vertx.customer.data;
 
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.ProxyGen;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;

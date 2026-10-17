@@ -1,14 +1,11 @@
 package pl.piomin.services.vertx.account.data;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
-import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
 
@@ -16,7 +13,7 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountRepositoryImpl.class);
 
-    MongoClient client;
+    private final MongoClient client;
 
     public AccountRepositoryImpl(final MongoClient client) {
         this.client = client;
@@ -40,7 +37,7 @@ public class AccountRepositoryImpl implements AccountRepository {
                             it.getString("number"),
                             it.getInteger("balance"),
                             it.getString("customerId")))
-                    .collect(Collectors.toList());
+                    .toList();
             return accounts;
         });
     }

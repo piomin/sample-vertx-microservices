@@ -1,7 +1,6 @@
 package pl.piomin.services.vertx.customer.client;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +40,7 @@ public class AccountClient {
                         try {
                             List<Account> accounts = response.bodyAsJsonArray().stream()
                                 .map(it -> Json.decodeValue(it.toString(), Account.class))
-                                .collect(Collectors.toList());
+                                .toList();
                             return Future.succeededFuture(accounts);
                         } catch (Exception e) {
                             return Future.failedFuture("Failed to parse accounts: " + e.getMessage());
