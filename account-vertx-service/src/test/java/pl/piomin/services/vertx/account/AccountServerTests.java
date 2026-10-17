@@ -47,7 +47,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account")
@@ -98,7 +98,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void shouldDeleteById(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.delete(2222, "localhost", "/account/" + id)

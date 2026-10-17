@@ -53,7 +53,8 @@ public class CustomerServerTests {
                     assertNotNull(res.body());
                     assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
@@ -71,7 +72,8 @@ public class CustomerServerTests {
                     assertNotNull(res.bodyAsJson(Customer.class).getId());
                     id = res.bodyAsJson(Customer.class).getId();
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
