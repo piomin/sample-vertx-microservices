@@ -22,7 +22,7 @@ public class CustomerServerTests {
 
     final static Logger LOGGER = LoggerFactory.getLogger(CustomerServerTests.class);
     final static MongoDBContainer mongoDBContainer = new MongoDBContainer(DockerImageName.parse("mongo:5.0"));
-    final static ConsulContainer consulContainer = new ConsulContainer("consul:1.14")
+    final static ConsulContainer consulContainer = new ConsulContainer("hashicorp/consul:1.22")
             .withConsulCommand("kv put config/customer-service test=abc");
 
     static String id;
