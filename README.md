@@ -9,7 +9,7 @@
 
 ## Sample Vert.x Micro-services
 
-This repository demonstrates a **poly-repo** style Vert.x 4 project written in Java 21.  
+This repository demonstrates a **poly-repo** style Vert.x 5 project written in Java 21.  
 It contains two autonomous micro-services that communicate through HTTP and are discoverable via **Consul**.
 
 ```mermaid
@@ -39,7 +39,7 @@ Both are declared in the parent `pom.xml`:
 
 ### Tech Stack
 * Java 21  
-* Vert.x 4.5.x (`vertx-web`, `vertx-service-discovery`, `vertx-web-client`)  
+* Vert.x 5.2.1 (`vertx-web`, `vertx-service-discovery`, `vertx-web-client`)  
 * MongoDB ⁄ `vertx-mongo-client`  
 * Consul 8500 for service registry  
 * Maven 3.9 – multi-module build  
