@@ -11,6 +11,15 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.validation.BadRequestException;
+import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.ext.web.validation.builder.Bodies;
+import io.vertx.ext.web.validation.builder.ValidationHandlerBuilder;
+import io.vertx.json.schema.Draft;
+import io.vertx.json.schema.JsonSchemaOptions;
+import io.vertx.json.schema.SchemaRepository;
+import io.vertx.json.schema.common.dsl.Keywords;
+import io.vertx.json.schema.common.dsl.Schemas;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.consul.ConsulServiceImporter;
 import org.slf4j.Logger;
@@ -43,6 +52,15 @@ public class CustomerServer extends AbstractVerticle {
     public void start() throws Exception {
         ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
         CustomerRepository repository = CustomerRepository.createProxy(vertx, "customer-service");
+
+        SchemaRepository schemaRepository = SchemaRepository.create(
+                new JsonSchemaOptions().setDraft(Draft.DRAFT7).setBaseUri("https://vertx.io"));
+
+        ValidationHandler customerValidationHandler = ValidationHandlerBuilder
+                .create(schemaRepository)
+                .body(Bodies.json(Schemas.objectSchema()
+                        .requiredProperty("name", Schemas.stringSchema().with(Keywords.minLength(1)))))
+                .build();
 
         Router router = Router.router(vertx);
         router.route("/customer/*").handler(ResponseContentTypeHandler.create());
@@ -79,15 +97,28 @@ public class CustomerServer extends AbstractVerticle {
                 }
             });
         });
-        router.post("/customer").produces("application/json").handler(rc -> {
-            Customer c = rc.body().asPojo(Customer.class);
-            repository.save(c).onComplete(res -> {
-                if (res.succeeded()) {
-                    rc.response().end(Json.encodePrettily(res.result()));
-                } else {
-                    rc.response().setStatusCode(500).end();
-                }
-            });
+        router.post("/customer")
+                .handler(customerValidationHandler)
+                .produces("application/json")
+                .handler(rc -> {
+                    Customer c = rc.body().asPojo(Customer.class);
+                    repository.save(c).onComplete(res -> {
+                        if (res.succeeded()) {
+                            rc.response().end(Json.encodePrettily(res.result()));
+                        } else {
+                            rc.response().setStatusCode(500).end();
+                        }
+                    });
+                });
+        router.post("/customer").failureHandler(rc -> {
+            if (rc.failure() instanceof BadRequestException) {
+                rc.response()
+                        .setStatusCode(400)
+                        .putHeader("Content-Type", "application/json")
+                        .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
+            } else {
+                rc.response().setStatusCode(500).end();
+            }
         });
         router.delete("/customer/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id")).onComplete(res -> {

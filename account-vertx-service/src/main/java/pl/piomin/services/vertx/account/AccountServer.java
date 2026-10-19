@@ -13,6 +13,15 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.ext.web.validation.BadRequestException;
+import io.vertx.ext.web.validation.ValidationHandler;
+import io.vertx.ext.web.validation.builder.Bodies;
+import io.vertx.ext.web.validation.builder.ValidationHandlerBuilder;
+import io.vertx.json.schema.Draft;
+import io.vertx.json.schema.JsonSchemaOptions;
+import io.vertx.json.schema.SchemaRepository;
+import io.vertx.json.schema.common.dsl.Keywords;
+import io.vertx.json.schema.common.dsl.Schemas;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.piomin.services.vertx.account.data.Account;
@@ -32,6 +41,17 @@ public class AccountServer extends AbstractVerticle {
     @Override
     public void start() throws Exception {
         AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
+
+        SchemaRepository schemaRepository = SchemaRepository.create(
+                new JsonSchemaOptions().setDraft(Draft.DRAFT7).setBaseUri("https://vertx.io"));
+
+        ValidationHandler accountValidationHandler = ValidationHandlerBuilder
+                .create(schemaRepository)
+                .body(Bodies.json(Schemas.objectSchema()
+                        .requiredProperty("number", Schemas.stringSchema().with(Keywords.minLength(1)))
+                        .requiredProperty("customerId", Schemas.stringSchema().with(Keywords.minLength(1)))
+                        .requiredProperty("balance", Schemas.intSchema().with(Keywords.minimum(0)))))
+                .build();
 
         Router router = Router.router(vertx);
         router.route("/account/*").handler(ResponseContentTypeHandler.create());
@@ -68,15 +88,28 @@ public class AccountServer extends AbstractVerticle {
                 }
             });
         });
-        router.post("/account").produces("application/json").handler(rc -> {
-            Account a = rc.body().asPojo(Account.class);
-            repository.save(a).onComplete(res -> {
-                if (res.succeeded()) {
-                    rc.response().end(Json.encodePrettily(res.result()));
-                } else {
-                    rc.response().setStatusCode(500).end();
-                }
-            });
+        router.post("/account")
+                .handler(accountValidationHandler)
+                .produces("application/json")
+                .handler(rc -> {
+                    Account a = rc.body().asPojo(Account.class);
+                    repository.save(a).onComplete(res -> {
+                        if (res.succeeded()) {
+                            rc.response().end(Json.encodePrettily(res.result()));
+                        } else {
+                            rc.response().setStatusCode(500).end();
+                        }
+                    });
+                });
+        router.post("/account").failureHandler(rc -> {
+            if (rc.failure() instanceof BadRequestException) {
+                rc.response()
+                        .setStatusCode(400)
+                        .putHeader("Content-Type", "application/json")
+                        .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
+            } else {
+                rc.response().setStatusCode(500).end();
+            }
         });
         router.delete("/account/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id")).onComplete(res -> {
