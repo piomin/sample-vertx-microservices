@@ -47,7 +47,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account")
@@ -84,6 +84,22 @@ public class AccountServerTests {
 
     @Test
     @Order(2)
+    void shouldFindByCustomer(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/account/customer/123")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertNotNull(res.body());
+                    assertFalse(res.bodyAsJsonArray().isEmpty(), "Expected at least one account for customerId 123");
+                    assertEquals("123", res.bodyAsJsonArray().getJsonObject(0).getString("customerId"));
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(3)
     void shouldFindById(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account/" + id)
@@ -98,7 +114,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void shouldDeleteById(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.delete(2222, "localhost", "/account/" + id)
