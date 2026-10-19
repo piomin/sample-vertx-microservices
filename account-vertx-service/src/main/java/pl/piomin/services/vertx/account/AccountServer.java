@@ -31,9 +31,7 @@ public class AccountServer extends AbstractVerticle {
         MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
                 .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
                 .setEnabled(true);
-        Vertx vertx = Vertx.builder()
-                .with(new VertxOptions().setMetricsOptions(metricsOptions))
-                .build();
+        Vertx vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
         vertx.deployVerticle(new MongoVerticle());
         vertx.deployVerticle(new AccountServer());
     }
