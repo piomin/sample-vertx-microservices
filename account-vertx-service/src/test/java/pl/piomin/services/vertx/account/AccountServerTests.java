@@ -1,6 +1,7 @@
 package pl.piomin.services.vertx.account;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -55,7 +56,7 @@ public class AccountServerTests {
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
-                    assertEquals(!res.bodyAsJsonArray().isEmpty(), true, "Expected at least one account");
+                    assertFalse(res.bodyAsJsonArray().isEmpty(), "Expected at least one account");
                     assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
                 })
@@ -90,9 +91,11 @@ public class AccountServerTests {
                 .send()
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
+                    assertEquals(200, res.statusCode());
                     assertNotNull(res.body());
-                    assertFalse(res.bodyAsJsonArray().isEmpty(), "Expected at least one account for customerId 123");
-                    assertEquals("123", res.bodyAsJsonArray().getJsonObject(0).getString("customerId"));
+                    JsonArray accounts = res.bodyAsJsonArray();
+                    assertFalse(accounts.isEmpty(), "Expected at least one account for customerId 123");
+                    assertEquals("123", accounts.getJsonObject(0).getString("customerId"));
                     testContext.completeNow();
                 })
                 .onFailure(testContext::failNow);
