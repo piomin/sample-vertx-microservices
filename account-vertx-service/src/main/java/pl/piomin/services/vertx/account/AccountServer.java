@@ -36,6 +36,15 @@ public class AccountServer extends AbstractVerticle {
         Router router = Router.router(vertx);
         router.route("/account/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
+        router.get("/account/customer/:customer").produces("application/json").handler(rc -> {
+            repository.findByCustomer(rc.request().getParam("customer")).onComplete(res -> {
+                if (res.succeeded()) {
+                    rc.response().end(Json.encodePrettily(res.result()));
+                } else {
+                    rc.response().setStatusCode(500).end();
+                }
+            });
+        });
         router.get("/account/:id").produces("application/json").handler(rc -> {
             repository.findById(rc.request().getParam("id")).onComplete(res -> {
                 if (res.succeeded()) {
@@ -45,15 +54,6 @@ public class AccountServer extends AbstractVerticle {
                     } else {
                         rc.response().end(Json.encodePrettily(a));
                     }
-                } else {
-                    rc.response().setStatusCode(500).end();
-                }
-            });
-        });
-        router.get("/account/customer/:customer").produces("application/json").handler(rc -> {
-            repository.findByCustomer(rc.request().getParam("customer")).onComplete(res -> {
-                if (res.succeeded()) {
-                    rc.response().end(Json.encodePrettily(res.result()));
                 } else {
                     rc.response().setStatusCode(500).end();
                 }

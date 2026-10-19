@@ -1,6 +1,7 @@
 package pl.piomin.services.vertx.account;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
@@ -47,7 +48,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(3)
+    @Order(4)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account")
@@ -55,7 +56,7 @@ public class AccountServerTests {
                 .onSuccess(res -> {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
-                    assertEquals(!res.bodyAsJsonArray().isEmpty(), true, "Expected at least one account");
+                    assertFalse(res.bodyAsJsonArray().isEmpty(), "Expected at least one account");
                     assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
                 })
@@ -84,6 +85,24 @@ public class AccountServerTests {
 
     @Test
     @Order(2)
+    void shouldFindByCustomer(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/account/customer/123")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info(res.bodyAsString());
+                    assertEquals(200, res.statusCode());
+                    assertNotNull(res.body());
+                    JsonArray accounts = res.bodyAsJsonArray();
+                    assertFalse(accounts.isEmpty(), "Expected at least one account for customerId 123");
+                    assertEquals("123", accounts.getJsonObject(0).getString("customerId"));
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(3)
     void shouldFindById(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account/" + id)
@@ -98,7 +117,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     void shouldDeleteById(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.delete(2222, "localhost", "/account/" + id)
