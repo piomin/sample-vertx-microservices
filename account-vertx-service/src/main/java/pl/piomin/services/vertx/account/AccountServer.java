@@ -100,17 +100,17 @@ public class AccountServer extends AbstractVerticle {
                             rc.response().setStatusCode(500).end();
                         }
                     });
+                })
+                .failureHandler(rc -> {
+                    if (rc.failure() instanceof BadRequestException) {
+                        rc.response()
+                                .setStatusCode(400)
+                                .putHeader("Content-Type", "application/json")
+                                .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
+                    } else {
+                        rc.response().setStatusCode(500).end();
+                    }
                 });
-        router.post("/account").failureHandler(rc -> {
-            if (rc.failure() instanceof BadRequestException) {
-                rc.response()
-                        .setStatusCode(400)
-                        .putHeader("Content-Type", "application/json")
-                        .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
-            } else {
-                rc.response().setStatusCode(500).end();
-            }
-        });
         router.delete("/account/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id")).onComplete(res -> {
                 if (res.succeeded()) {

@@ -109,17 +109,17 @@ public class CustomerServer extends AbstractVerticle {
                             rc.response().setStatusCode(500).end();
                         }
                     });
+                })
+                .failureHandler(rc -> {
+                    if (rc.failure() instanceof BadRequestException) {
+                        rc.response()
+                                .setStatusCode(400)
+                                .putHeader("Content-Type", "application/json")
+                                .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
+                    } else {
+                        rc.response().setStatusCode(500).end();
+                    }
                 });
-        router.post("/customer").failureHandler(rc -> {
-            if (rc.failure() instanceof BadRequestException) {
-                rc.response()
-                        .setStatusCode(400)
-                        .putHeader("Content-Type", "application/json")
-                        .end(new JsonObject().put("error", rc.failure().getMessage()).encode());
-            } else {
-                rc.response().setStatusCode(500).end();
-            }
-        });
         router.delete("/customer/:id").handler(rc -> {
             repository.remove(rc.request().getParam("id")).onComplete(res -> {
                 if (res.succeeded()) {
