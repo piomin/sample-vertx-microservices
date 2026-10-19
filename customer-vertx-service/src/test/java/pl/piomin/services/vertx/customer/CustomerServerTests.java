@@ -13,6 +13,7 @@ import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 import pl.piomin.services.vertx.customer.data.Customer;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @ExtendWith(VertxExtension.class)
@@ -52,7 +53,8 @@ public class CustomerServerTests {
                     assertNotNull(res.body());
                     assertNotNull(res.bodyAsJsonArray().getJsonObject(0).getString("id"));
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
@@ -70,7 +72,8 @@ public class CustomerServerTests {
                     assertNotNull(res.bodyAsJson(Customer.class).getId());
                     id = res.bodyAsJson(Customer.class).getId();
                     testContext.completeNow();
-                });
+                })
+                .onFailure(testContext::failNow);
     }
 
     @Test
@@ -98,6 +101,20 @@ public class CustomerServerTests {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
                     assertNotNull(res.bodyAsJson(Customer.class).getId());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(3)
+    void shouldDeleteById(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.delete(3333, "localhost", "/customer/" + id)
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Delete status: {}", res.statusCode());
+                    assertEquals(200, res.statusCode());
                     testContext.completeNow();
                 })
                 .onFailure(testContext::failNow);

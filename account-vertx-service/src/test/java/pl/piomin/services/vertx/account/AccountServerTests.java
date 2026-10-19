@@ -47,7 +47,7 @@ public class AccountServerTests {
     }
 
     @Test
-    @Order(2)
+    @Order(3)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);
         client.get(2222, "localhost", "/account")
@@ -92,6 +92,20 @@ public class AccountServerTests {
                     LOGGER.info(res.bodyAsString());
                     assertNotNull(res.body());
                     assertNotNull(res.bodyAsJson(Account.class).getId());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(4)
+    void shouldDeleteById(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.delete(2222, "localhost", "/account/" + id)
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Delete status: {}", res.statusCode());
+                    assertEquals(200, res.statusCode());
                     testContext.completeNow();
                 })
                 .onFailure(testContext::failNow);
