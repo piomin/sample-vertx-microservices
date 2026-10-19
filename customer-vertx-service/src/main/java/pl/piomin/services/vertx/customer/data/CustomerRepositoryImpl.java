@@ -50,7 +50,7 @@ public class CustomerRepositoryImpl implements CustomerRepository {
                                     it.getString("name"),
                                     it.getInteger("age")))
                     .toList();
-            return accounts.getFirst();
+            return accounts.isEmpty() ? null : accounts.getFirst();
         });
     }
 

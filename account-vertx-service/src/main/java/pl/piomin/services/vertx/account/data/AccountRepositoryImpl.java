@@ -52,7 +52,7 @@ public class AccountRepositoryImpl implements AccountRepository {
                                     it.getInteger("balance"),
                                     it.getString("customerId")))
                     .toList();
-            return accounts.getFirst();
+            return accounts.isEmpty() ? null : accounts.getFirst();
         });
     }
 
