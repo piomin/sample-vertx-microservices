@@ -19,6 +19,14 @@ public class AccountRepositoryImpl implements AccountRepository {
         this.client = client;
     }
 
+    private Account fromDocument(JsonObject doc) {
+        return new Account(
+                doc.getString("_id"),
+                doc.getString("number"),
+                doc.getInteger("balance"),
+                doc.getString("customerId"));
+    }
+
     @Override
     public Future<Account> save(Account account) {
         JsonObject json = JsonObject.mapFrom(account);
@@ -30,44 +38,22 @@ public class AccountRepositoryImpl implements AccountRepository {
 
     @Override
     public Future<List<Account>> findAll() {
-        return client.find(Account.DB_TABLE, new JsonObject()).map(res -> {
-            List<Account> accounts = res.stream().map(it ->
-                    new Account(
-                            it.getString("_id"),
-                            it.getString("number"),
-                            it.getInteger("balance"),
-                            it.getString("customerId")))
-                    .toList();
-            return accounts;
-        });
+        return client.find(Account.DB_TABLE, new JsonObject())
+                .map(res -> res.stream().map(this::fromDocument).toList());
     }
 
     @Override
     public Future<Account> findById(String id) {
         return client.find(Account.DB_TABLE, new JsonObject().put("_id", id)).map(res -> {
-            List<Account> accounts = res.stream().map(it ->
-                            new Account(
-                                    it.getString("_id"),
-                                    it.getString("number"),
-                                    it.getInteger("balance"),
-                                    it.getString("customerId")))
-                    .toList();
+            List<Account> accounts = res.stream().map(this::fromDocument).toList();
             return accounts.isEmpty() ? null : accounts.getFirst();
         });
     }
 
     @Override
     public Future<List<Account>> findByCustomer(String customerId) {
-        return client.find(Account.DB_TABLE, new JsonObject().put("customerId", customerId)).map(res -> {
-            List<Account> accounts = res.stream().map(it ->
-                            new Account(
-                                    it.getString("_id"),
-                                    it.getString("number"),
-                                    it.getInteger("balance"),
-                                    it.getString("customerId")))
-                    .toList();
-            return accounts;
-        });
+        return client.find(Account.DB_TABLE, new JsonObject().put("customerId", customerId))
+                .map(res -> res.stream().map(this::fromDocument).toList());
     }
 
     @Override
