@@ -5,12 +5,16 @@ import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.PrometheusScrapingHandler;
+import io.vertx.micrometer.VertxPrometheusOptions;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.consul.ConsulServiceImporter;
 import org.slf4j.Logger;
@@ -34,7 +38,12 @@ public class CustomerServer extends AbstractVerticle {
     }
 
     public static void main(String[] args) throws Exception {
-        Vertx vertx = Vertx.vertx();
+        MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+                .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+                .setEnabled(true);
+        Vertx vertx = Vertx.builder()
+                .with(new VertxOptions().setMetricsOptions(metricsOptions))
+                .build();
         vertx.deployVerticle(new MongoVerticle());
         vertx.deployVerticle(new CustomerServer());
     }
@@ -98,6 +107,7 @@ public class CustomerServer extends AbstractVerticle {
                 }
             });
         });
+        router.get("/metrics").handler(PrometheusScrapingHandler.create());
 
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
         ConfigRetriever retriever = ConfigRetriever.create(vertx, new ConfigRetrieverOptions().addStore(file));

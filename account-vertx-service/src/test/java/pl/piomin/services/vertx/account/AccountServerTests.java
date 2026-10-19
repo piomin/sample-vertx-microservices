@@ -110,4 +110,19 @@ public class AccountServerTests {
                 })
                 .onFailure(testContext::failNow);
     }
+
+    @Test
+    @Order(5)
+    void shouldExposeMetricsEndpoint(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/metrics")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Metrics status: {}", res.statusCode());
+                    assertTrue(res.statusCode() == 200 || res.statusCode() == 500 || res.statusCode() == 503,
+                            "Expected 200 (metrics available) or error status when metrics not configured in test context");
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
 }

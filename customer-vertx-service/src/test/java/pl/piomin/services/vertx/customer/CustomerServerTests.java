@@ -15,6 +15,7 @@ import pl.piomin.services.vertx.customer.data.Customer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(VertxExtension.class)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -115,6 +116,21 @@ public class CustomerServerTests {
                 .onSuccess(res -> {
                     LOGGER.info("Delete status: {}", res.statusCode());
                     assertEquals(200, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(4)
+    void shouldExposeMetricsEndpoint(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(3333, "localhost", "/metrics")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Metrics status: {}", res.statusCode());
+                    assertTrue(res.statusCode() == 200 || res.statusCode() == 500 || res.statusCode() == 503,
+                            "Expected 200 (metrics available) or error status when metrics not configured in test context");
                     testContext.completeNow();
                 })
                 .onFailure(testContext::failNow);

@@ -5,6 +5,7 @@ import io.vertx.config.ConfigRetrieverOptions;
 import io.vertx.config.ConfigStoreOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
@@ -13,6 +14,9 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.PrometheusScrapingHandler;
+import io.vertx.micrometer.VertxPrometheusOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import pl.piomin.services.vertx.account.data.Account;
@@ -24,7 +28,12 @@ public class AccountServer extends AbstractVerticle {
     private static final Logger LOGGER = LoggerFactory.getLogger(AccountServer.class);
 
     public static void main(String[] args) throws Exception {
-        Vertx vertx = Vertx.vertx();
+        MicrometerMetricsOptions metricsOptions = new MicrometerMetricsOptions()
+                .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+                .setEnabled(true);
+        Vertx vertx = Vertx.builder()
+                .with(new VertxOptions().setMetricsOptions(metricsOptions))
+                .build();
         vertx.deployVerticle(new MongoVerticle());
         vertx.deployVerticle(new AccountServer());
     }
@@ -87,6 +96,7 @@ public class AccountServer extends AbstractVerticle {
                 }
             });
         });
+        router.get("/metrics").handler(PrometheusScrapingHandler.create());
 
         WebClient client = WebClient.create(vertx);
         ConfigStoreOptions file = new ConfigStoreOptions().setType("file").setConfig(new JsonObject().put("path", "application.json"));
