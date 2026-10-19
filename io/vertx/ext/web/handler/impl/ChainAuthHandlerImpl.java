@@ -1,0 +1,204 @@
+package io.vertx.ext.web.handler.impl;
+
+import io.vertx.core.Completable;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.VertxException;
+import io.vertx.core.internal.logging.Logger;
+import io.vertx.core.internal.logging.LoggerFactory;
+import io.vertx.ext.auth.User;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.AuthenticationHandler;
+import io.vertx.ext.web.handler.ChainAuthHandler;
+import io.vertx.ext.web.handler.HttpException;
+import io.vertx.ext.web.internal.handler.ScopedAuthentication;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class ChainAuthHandlerImpl extends AuthenticationHandlerImpl<AuthenticationProvider> implements ChainAuthHandler {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ChainAuthHandler.class);
+
+  private static final String HANDLER_KEY_PREFIX = "__vertx.auth.chain.idx.";
+  private static final AtomicInteger HANDLER_KEY_SEQ = new AtomicInteger();
+
+  private final List<AuthenticationHandlerInternal> handlers = new ArrayList<>();
+  private final boolean all;
+  private final String chainAuthHandlerKey;
+
+  private int willRedirect = -1;
+
+  public ChainAuthHandlerImpl(boolean all) {
+    super(null);
+    this.all = all;
+    this.chainAuthHandlerKey = HANDLER_KEY_PREFIX + HANDLER_KEY_SEQ.getAndIncrement();
+  }
+
+  @Override
+  public boolean performsRedirect() {
+    return willRedirect != -1;
+  }
+
+  @Override
+  public synchronized ChainAuthHandler add(AuthenticationHandler other) {
+    if (performsRedirect()) {
+      throw new IllegalStateException("Cannot add a handler after a handler known to perform a HTTP redirect: " + handlers.get(willRedirect));
+    }
+    final AuthenticationHandlerInternal otherInternal = (AuthenticationHandlerInternal) other;
+    // control if we should not allow more handlers due to the possibility of a redirect to happen
+    if (otherInternal.performsRedirect()) {
+      willRedirect = handlers.size();
+    }
+    handlers.add(otherInternal);
+    return this;
+  }
+
+  @Override
+  public Future<User> authenticate(RoutingContext context) {
+    if (handlers.isEmpty()) {
+      return Future.failedFuture("No providers in the auth chain.");
+    } else {
+      // iterate all possible authN
+      Promise<User> promise = Promise.promise();
+      iterate(0, context, null, null, promise);
+      return promise.future();
+    }
+  }
+
+  private void iterate(final int idx, final RoutingContext ctx, User result, Throwable exception, Completable<User> handler) {
+    // stop condition
+    if (idx >= handlers.size()) {
+      if (all) {
+        // no more providers, if the call is signaling an error we fail as the last handler failed
+        handler.complete(result, exception);
+      } else {
+        // no more providers, means that we failed to find a provider capable of performing this operation
+        handler.complete(null, exception);
+      }
+      return;
+    }
+
+    // parse the request in order to extract the credentials object
+    final AuthenticationHandlerInternal authHandler = handlers.get(idx);
+
+    authHandler
+      .authenticate(ctx)
+      .onFailure(err -> {
+        if (all) {
+          // all handlers need to be valid, a single failure is enough to
+          // abort the execution of the chain
+        } else {
+          // any handler can be valid, if the response is within a validation error
+          // the chain is allowed to proceed, otherwise we must abort.
+          if (err instanceof HttpException) {
+            final HttpException ex = (HttpException) err;
+            switch (ex.getStatusCode()) {
+              case 302:
+              case 400:
+              case 401:
+              case 403:
+                // try again with next provider since we know what kind of error it is
+                iterate(idx + 1, ctx, null, ex, handler);
+                return;
+            }
+          }
+          // the error is not a validation exception, so we abort regardless
+        }
+        handler.complete(null, err);
+      })
+      .onSuccess(user -> {
+      if (all) {
+        // this handler is succeeded, but as we need all, we must continue with
+        // the iteration of the remaining handlers.
+        iterate(idx + 1, ctx, user, null, handler);
+      } else {
+        // a single success is enough to signal the end of the validation
+        ctx.put(chainAuthHandlerKey, idx);
+        handler.complete(user, null);
+      }
+    });
+  }
+
+  @Override
+  public boolean setAuthenticateHeader(RoutingContext ctx) {
+    boolean added = false;
+    for (AuthenticationHandlerInternal authHandler : handlers) {
+      if (all && added) {
+        // we can only allow 1 header in this case,
+        // otherwise we tell the user agent to pick the strongest,
+        // yet we want them all
+        LOG.warn("Multiple WWW-Authenticate headers will be suppressed on a ALL chain");
+        break;
+      }
+      added |= authHandler.setAuthenticateHeader(ctx);
+    }
+    return added;
+  }
+
+  @Override
+  public void postAuthentication(RoutingContext ctx) {
+    final User user = ctx.user();
+
+    if (all) {
+      verifyScopesAll(ctx, user)
+        .onSuccess(v -> ctx.next())
+        .onFailure(err -> ctx.fail(403, err));
+    } else {
+      Integer idx = ctx.get(chainAuthHandlerKey);
+      if (idx != null) {
+        // Normal case: a handler won during authenticate(), delegate to it
+        handlers.get(idx).postAuthentication(ctx);
+      } else {
+        // Pre-authenticated user: no handler won during authenticate(),
+        // try each scoped handler until one accepts
+        verifyScopesAny(ctx, user)
+          .onSuccess(winnerIdx -> {
+            if (winnerIdx == -1) {
+              // No scoped handler exists in the chain, pass through
+              ctx.next();
+            } else {
+              // Delegate to the winning handler's postAuthentication
+              handlers.get(winnerIdx).postAuthentication(ctx);
+            }
+          })
+          .onFailure(err -> ctx.fail(403, err));
+      }
+    }
+  }
+
+  private Future<Void> verifyScopesAll(RoutingContext ctx, User user) {
+    Future<Void> result = Future.succeededFuture();
+    for (AuthenticationHandlerInternal handler : handlers) {
+      if (handler instanceof ScopedAuthentication) {
+        ScopedAuthentication<?> scopedAuthentication = (ScopedAuthentication<?>) handler;
+        result = result.compose(v -> scopedAuthentication.verifyScopes(ctx, user));
+      }
+    }
+    return result;
+  }
+
+  private Future<Integer> verifyScopesAny(RoutingContext ctx, User user) {
+    Future<Integer> result = null;
+    for (int i = 0; i < handlers.size(); i++) {
+      final AuthenticationHandlerInternal handler = handlers.get(i);
+      if (handler instanceof ScopedAuthentication) {
+        final int idx = i;
+        ScopedAuthentication<?> scoped = (ScopedAuthentication<?>) handler;
+        if (result == null) {
+          result = scoped.verifyScopes(ctx, user).map(v -> idx);
+        } else {
+          result = result.compose(Future::succeededFuture, err -> scoped.verifyScopes(ctx, user).map(v -> idx));
+        }
+      }
+    }
+    if (result == null) {
+      return Future.succeededFuture(-1);
+    }
+    return result.compose(
+      Future::succeededFuture,
+      err -> Future.failedFuture(new VertxException("No handler accepted the user's scopes", true)));
+  }
+}
