@@ -39,6 +39,9 @@ public class MongoVerticle extends AbstractVerticle {
             final MongoClient client = MongoClient.createShared(vertx, o);
             final CustomerRepository service = new CustomerRepositoryImpl(client);
 
+            // Store the mongo config in shared local map so the health check in CustomerServer can reuse the shared pool
+            vertx.sharedData().<String, Object>getLocalMap("mongo-config").put("config", o);
+
             new ServiceBinder(vertx)
                     .setAddress("customer-service")
                     .register(CustomerRepository.class, service);

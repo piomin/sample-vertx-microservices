@@ -8,6 +8,9 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.Status;
+import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.ResponseContentTypeHandler;
@@ -44,7 +47,41 @@ public class CustomerServer extends AbstractVerticle {
         ServiceDiscovery discovery = ServiceDiscovery.create(vertx);
         CustomerRepository repository = CustomerRepository.createProxy(vertx, "customer-service");
 
+        // Health check handler — liveness
+        HealthCheckHandler livenessHandler = HealthCheckHandler.create(vertx);
+        livenessHandler.register("live", promise -> promise.complete(Status.OK()));
+
+        // Health check handler — readiness (MongoDB ping + Consul discovery availability)
+        HealthCheckHandler readinessHandler = HealthCheckHandler.create(vertx);
+        readinessHandler.register("mongodb", promise -> {
+            JsonObject mongoConfig = (JsonObject) vertx.sharedData().<String, Object>getLocalMap("mongo-config").get("config");
+            if (mongoConfig == null) {
+                promise.complete(Status.KO());
+                return;
+            }
+            MongoClient mongoClient = MongoClient.createShared(vertx, mongoConfig);
+            mongoClient.find("customers", new JsonObject()).onComplete(res -> {
+                if (res.succeeded()) {
+                    promise.complete(Status.OK());
+                } else {
+                    promise.complete(Status.KO());
+                }
+            });
+        });
+        readinessHandler.register("discovery", promise -> {
+            discovery.getRecords(new JsonObject()).onComplete(res -> {
+                if (res.succeeded()) {
+                    promise.complete(Status.OK());
+                } else {
+                    promise.complete(Status.KO());
+                }
+            });
+        });
+
         Router router = Router.router(vertx);
+        router.get("/health").handler(livenessHandler);
+        router.get("/live").handler(livenessHandler);
+        router.get("/ready").handler(readinessHandler);
         router.route("/customer/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/customer").handler(BodyHandler.create());
         router.get("/customer/:id").produces("application/json").handler(rc -> {

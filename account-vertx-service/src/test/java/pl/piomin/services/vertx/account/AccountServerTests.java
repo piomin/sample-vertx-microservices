@@ -47,6 +47,34 @@ public class AccountServerTests {
     }
 
     @Test
+    @Order(0)
+    void shouldReturnLiveness(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/health")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Health status: {}", res.statusCode());
+                    assertEquals(200, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(0)
+    void shouldReturnReadiness(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.get(2222, "localhost", "/ready")
+                .send()
+                .onSuccess(res -> {
+                    LOGGER.info("Ready status: {}", res.statusCode());
+                    assertEquals(200, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
     @Order(3)
     void shouldFindAll(Vertx vertx, VertxTestContext testContext) {
         WebClient client = WebClient.create(vertx);

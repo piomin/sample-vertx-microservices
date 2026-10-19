@@ -9,6 +9,9 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.healthchecks.Status;
+import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -33,7 +36,32 @@ public class AccountServer extends AbstractVerticle {
     public void start() throws Exception {
         AccountRepository repository = AccountRepository.createProxy(vertx, "account-service");
 
+        // Health check handler — liveness
+        HealthCheckHandler livenessHandler = HealthCheckHandler.create(vertx);
+        livenessHandler.register("live", promise -> promise.complete(Status.OK()));
+
+        // Health check handler — readiness (MongoDB ping via shared pool)
+        HealthCheckHandler readinessHandler = HealthCheckHandler.create(vertx);
+        readinessHandler.register("mongodb", promise -> {
+            JsonObject mongoConfig = (JsonObject) vertx.sharedData().<String, Object>getLocalMap("mongo-config").get("config");
+            if (mongoConfig == null) {
+                promise.complete(Status.KO());
+                return;
+            }
+            MongoClient mongoClient = MongoClient.createShared(vertx, mongoConfig);
+            mongoClient.find("accounts", new JsonObject()).onComplete(res -> {
+                if (res.succeeded()) {
+                    promise.complete(Status.OK());
+                } else {
+                    promise.complete(Status.KO());
+                }
+            });
+        });
+
         Router router = Router.router(vertx);
+        router.get("/health").handler(livenessHandler);
+        router.get("/live").handler(livenessHandler);
+        router.get("/ready").handler(readinessHandler);
         router.route("/account/*").handler(ResponseContentTypeHandler.create());
         router.route(HttpMethod.POST, "/account").handler(BodyHandler.create());
         router.get("/account/:id").produces("application/json").handler(rc -> {
