@@ -19,6 +19,13 @@ public class CustomerRepositoryImpl implements CustomerRepository {
         this.client = client;
     }
 
+    private Customer fromDocument(JsonObject doc) {
+        return new Customer(
+                doc.getString("_id"),
+                doc.getString("name"),
+                doc.getInteger("age"));
+    }
+
     @Override
     public Future<Customer> save(Customer customer) {
         JsonObject json = JsonObject.mapFrom(customer);
@@ -30,41 +37,22 @@ public class CustomerRepositoryImpl implements CustomerRepository {
 
     @Override
     public Future<List<Customer>> findAll() {
-        return client.find(Customer.DB_TABLE, new JsonObject()).map(res -> {
-            List<Customer> customers = res.stream().map(it ->
-                            new Customer(
-                                    it.getString("_id"),
-                                    it.getString("name"),
-                                    it.getInteger("age")))
-                    .toList();
-            return customers;
-        });
+        return client.find(Customer.DB_TABLE, new JsonObject())
+                .map(res -> res.stream().map(this::fromDocument).toList());
     }
 
     @Override
     public Future<Customer> findById(String id) {
         return client.find(Customer.DB_TABLE, new JsonObject().put("_id", id)).map(res -> {
-            List<Customer> accounts = res.stream().map(it ->
-                            new Customer(
-                                    it.getString("_id"),
-                                    it.getString("name"),
-                                    it.getInteger("age")))
-                    .toList();
-            return accounts.isEmpty() ? null : accounts.getFirst();
+            List<Customer> customers = res.stream().map(this::fromDocument).toList();
+            return customers.isEmpty() ? null : customers.getFirst();
         });
     }
 
     @Override
     public Future<List<Customer>> findByName(String name) {
-        return client.find(Customer.DB_TABLE, new JsonObject().put("name", name)).map(res -> {
-            List<Customer> customers = res.stream().map(it ->
-                            new Customer(
-                                    it.getString("_id"),
-                                    it.getString("name"),
-                                    it.getInteger("age")))
-                    .toList();
-            return customers;
-        });
+        return client.find(Customer.DB_TABLE, new JsonObject().put("name", name))
+                .map(res -> res.stream().map(this::fromDocument).toList());
     }
 
     @Override
