@@ -1,0 +1,12 @@
+{
+	"port" : 2222,
+	"discovery" : {
+		"host" : "localhost",
+		"port" : 8500
+	},
+	"datasource" : {
+		"host" : "localhost",
+		"port" : 27017,
+		"db_name" : "test"
+	}
+}

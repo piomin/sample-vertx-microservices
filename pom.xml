@@ -21,6 +21,7 @@
     <modules>
         <module>account-vertx-service</module>
         <module>customer-vertx-service</module>
+        <module>security-vertx-service</module>
     </modules>
     
     <dependencyManagement>
