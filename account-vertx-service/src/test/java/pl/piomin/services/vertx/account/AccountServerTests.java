@@ -129,4 +129,55 @@ public class AccountServerTests {
                 })
                 .onFailure(testContext::failNow);
     }
+
+    @Test
+    @Order(5)
+    void shouldRejectEmptyBody(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.post(2222, "localhost", "/account")
+                .putHeader("Content-Type", "application/json")
+                .sendJson(new io.vertx.core.json.JsonObject())
+                .onSuccess(res -> {
+                    LOGGER.info("Empty body status: {}", res.statusCode());
+                    assertEquals(400, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(6)
+    void shouldRejectMissingRequiredFields(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        // Missing 'number' and 'customerId'
+        io.vertx.core.json.JsonObject body = new io.vertx.core.json.JsonObject().put("balance", 100);
+        client.post(2222, "localhost", "/account")
+                .putHeader("Content-Type", "application/json")
+                .sendJson(body)
+                .onSuccess(res -> {
+                    LOGGER.info("Missing fields status: {}", res.statusCode());
+                    assertEquals(400, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(7)
+    void shouldRejectNegativeBalance(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        io.vertx.core.json.JsonObject body = new io.vertx.core.json.JsonObject()
+                .put("number", "9999999999")
+                .put("customerId", "cust-001")
+                .put("balance", -5);
+        client.post(2222, "localhost", "/account")
+                .putHeader("Content-Type", "application/json")
+                .sendJson(body)
+                .onSuccess(res -> {
+                    LOGGER.info("Negative balance status: {}", res.statusCode());
+                    assertEquals(400, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
 }

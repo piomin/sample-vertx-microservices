@@ -120,4 +120,36 @@ public class CustomerServerTests {
                 .onFailure(testContext::failNow);
     }
 
+    @Test
+    @Order(4)
+    void shouldRejectEmptyBody(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        client.post(3333, "localhost", "/customer")
+                .putHeader("Content-Type", "application/json")
+                .sendJson(new io.vertx.core.json.JsonObject())
+                .onSuccess(res -> {
+                    LOGGER.info("Empty body status: {}", res.statusCode());
+                    assertEquals(400, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
+    @Test
+    @Order(5)
+    void shouldRejectMissingNameField(Vertx vertx, VertxTestContext testContext) {
+        WebClient client = WebClient.create(vertx);
+        // Missing required 'name' field
+        io.vertx.core.json.JsonObject body = new io.vertx.core.json.JsonObject().put("age", 25);
+        client.post(3333, "localhost", "/customer")
+                .putHeader("Content-Type", "application/json")
+                .sendJson(body)
+                .onSuccess(res -> {
+                    LOGGER.info("Missing name field status: {}", res.statusCode());
+                    assertEquals(400, res.statusCode());
+                    testContext.completeNow();
+                })
+                .onFailure(testContext::failNow);
+    }
+
 }
